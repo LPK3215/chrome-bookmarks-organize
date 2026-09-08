@@ -2,55 +2,93 @@
 
 > 直接编辑 Chrome/Edge 的 Bookmarks JSON 文件，让 AI Agent 帮你整理浏览器书签——**完全绕开"导出 HTML → 导入"的重复追加问题**。
 
-一个遵循 [Agent Skills](https://agentskills.io) 开放标准的技能（SKILL.md），可直接用于 Claude Code、OpenCode、QwenWork 等支持该标准的 AI 编程工具。
+一个遵循 [Agent Skills](https://agentskills.io) 开放标准的技能（`SKILL.md`），并附带一个离线、零第三方依赖的命令行工具箱 `scripts/bm.py`，可直接用于 Claude Code、QwenWork、OpenCode 等支持该标准的 AI 编程工具。
 
 ## 为什么做这个
 
-整理浏览器书签的常规路线是：导出 HTML → 手工/AI 整理 → 导入。但浏览器书签的**导入是追加不是替换**，整理完永远多出一个"已导入"文件夹，还得手工去重合并，整理 100 个书签有 30 分钟浪费在流程上。
+整理浏览器书签的常规路线是：导出 HTML → 手工/AI 整理 → 导入。但浏览器书签的**导入是追加不是替换**，整理完永远多出一个"已导入"文件夹，还得手工去重合并。
 
-实际上，浏览器书签的底层存储就是一个**纯 JSON 文件，无加密**。直接改它 = 改正式数据，重启浏览器即生效，开启同步时自动同步到账号。这条路社区博客早有验证，但一直没人把它封装成 AI 可执行的规范——本仓库补上这一环。
+实际上书签的底层存储就是一个**纯 JSON 文件，无加密**。直接改它 = 改正式数据，重启浏览器即生效、开同步自动同步到账号。这条路社区博客早有验证，但一直没人把它封装成 **AI 可执行 + 有安全护栏** 的规范——本仓库补上这一环。
 
-## 它能做什么
+## 核心：一条"带循环"的流程，不是一路走到底
 
-把这个 SKILL.md 装进你的 AI 工具后，说一句"帮我整理收藏夹"，AI 会按规范执行：
+```
+detect 定位 → preflight 体检(GO/NO-GO) → backup 底牌 → show 读准结构
+   → 〔循环区：plan 重排 → preview 预览 → 与用户反复确认，全程不动真身〕
+   → 用户拍板"就这版" → finalize 写回 → verify/diff 校验 → 重启浏览器验收
+   → 不满意 → restore 一键还原 → 回到循环区
+```
 
-- 🔍 自动定位正确的 Profile（多用户防呆）
-- 💾 修改前强制备份，并明确告知备份路径
-- 📂 重排目录树 / 改名 / 按 URL 去重 / 排序
-- 🧹 自动处理 `checksum` 校验字段（Chrome 会自动重建）
-- ✅ 写回后 JSON 合法性校验 + 书签数量对账
+只有 `finalize` 一步会真正改文件，其余都在内存/候选文件里折腾。
+
+## 工具箱 `scripts/bm.py`（10 个子命令）
+
+| 命令 | 作用 |
+|---|---|
+| `detect` | 按 OS 环境变量自动定位各浏览器 Profile 的 Bookmarks（**根路径不写死**，跨 Win/mac/Linux） |
+| `preflight` | 只读体检：存在/可读写/JSON 合法/浏览器是否在跑 → 给 **GO/NO-GO** |
+| `backup` | 改前时间戳底牌 + sha256 校验 + 记录还原命令 |
+| `show` | 打印真实结构（目录树/数量/重复 URL/是否有 checksum）——地基确认 |
+| `plan` | 内存里按 `--sort/--dedup` 重排到候选文件，**绝不碰原文件** |
+| `preview` | 渲染成**本地嵌套树 HTML**，双击肉眼核对（可 `--base` 看增删） |
+| `diff` | 两份书签逐条列增/删 URL |
+| `finalize` | **唯一动真身**：删 checksum、改名陈旧 `.bak`、写回（浏览器在跑自动拒绝，除非 `--force`；写前自动再兜一份） |
+| `verify` | JSON 合法性 + 结构合法 + id 唯一 + 数量对账 |
+| `restore` | 用底牌回退到底牌那一刻（非仅撤销最后一步，见 Pitfalls） |
+
+## 安全设计（为什么敢让它动你的真实数据）
+
+- **改前先备份**，且 `finalize` 自己还会再兜一份 `prescript`——漏做备份也能救。
+- **浏览器没退就拒绝写回**：`preflight`/`finalize` 用 tasklist/pgrep 自动检测，杜绝"改了被内存覆盖"。
+- **预览先行**：任何写回前，先把结构渲染成本地 HTML 让你肉眼核对；预览和浏览器一致，才证明脚本可信。
+- **不自作主张删**：去重只在同目录内合并，跨目录同链接保留；归类规则先与你确认。
+- 全程**本地、离线、零依赖**，不联网、不上传。
+
+## 快速上手
+
+```bash
+python scripts/bm.py detect                              # 找到要整理哪个
+python scripts/bm.py preflight --file "<Bookmarks>"      # GO/NO-GO
+python scripts/bm.py backup    --file "<Bookmarks>"      # 底牌
+python scripts/bm.py show      --file "<Bookmarks>"      # 读准结构
+python scripts/bm.py plan      --file "<Bookmarks>" --out cand --sort --dedup
+python scripts/bm.py preview   --file cand --base "<Bookmarks>" --out preview.html
+# 满意后（浏览器已退出）：
+python scripts/bm.py finalize  --from cand --target "<Bookmarks>"
+python scripts/bm.py verify    --file "<Bookmarks>" --before "<底牌>"
+# 不满意：
+python scripts/bm.py restore   --backup "<底牌>" --target "<Bookmarks>"
+```
+
+## 仓库结构
+
+- `SKILL.md` — 给 AI 看的操作规范（流程 + Pitfalls + 验证）。
+- `scripts/bm.py` — 上述工具箱。
+- `scripts/test/` — 常驻**对比测试案例**：从真实书签裁剪的 `Bookmarks.before`/`Bookmarks.after` + 两份预览 HTML（含隐私，已被 `.gitignore` 屏蔽，不入库）。
+- `MAINTENANCE.md` — 长期维护文档：**AI 判断 vs 脚本执行**的分工合同、脚本质量台账、边界矩阵、变更日志。
 
 ## 使用前提（硬性）
 
-1. **浏览器必须完全退出**（不是关窗口，托盘后台进程也要退干净）——运行时书签缓存在内存里，退出时会用旧数据覆盖磁盘修改，这是最常见的失败原因。
-2. 整理规则先和 AI 确认，**不自作主张删除任何一条书签**（已写死在 SKILL.md 中）。
+1. **整理真实书签时浏览器必须完全退出**（含托盘后台）——这是机制限制，`preflight`/`finalize` 已强制拦截。
+2. 整理规则先与 AI 确认，**不自作主张删除任何一条书签**。
 
-## 安装
+## 文件位置速查（也可直接 `detect` 自动找）
 
-把本仓库的 `SKILL.md` 放进你工具的技能目录即可：
-
-| 工具 | 技能目录 |
-|---|---|
-| Claude Code | `~/.claude/skills/chrome-bookmarks-organize/` |
-| QwenWork | `~/.qwenworkcn/skills/chrome-bookmarks-organize/` |
-| OpenCode | `.opencode/skills/chrome-bookmarks-organize/` |
-
-## 文件位置速查
-
-| 浏览器 | Bookmarks 文件路径 |
+| 浏览器 | Bookmarks 路径 |
 |---|---|
 | Chrome (Windows) | `%LOCALAPPDATA%\Google\Chrome\User Data\<Profile>\Bookmarks` |
 | Edge (Windows) | `%LOCALAPPDATA%\Microsoft\Edge\User Data\<Profile>\Bookmarks` |
-| Chrome (macOS) | `~/Library/Application Support/Google/Chrome/<Profile>/Bookmarks` |
+| Chrome (macOS) | `~/Library/Application Support/Google/Chrome/<Profile>/Bookmarks`（无 `User Data` 层） |
 | Chrome (Linux) | `~/.config/google-chrome/<Profile>/Bookmarks` |
 
-> `<Profile>` 通常为 `Default`，多用户场景可能是 `Profile 1`、`Profile 2`…
+> `<Profile>` 通常为 `Default`，多用户是 `Profile 1`…；`detect` 还能识别 Chromium/Brave/Vivaldi/Opera。
 
 ## 已知边界
 
-- 没有"热编辑"：改文件时浏览器必须关着，这是机制限制，任何工具都绕不开。
-- `date_added` 是 Chrome 时间戳（自 1601-01-01 起的微秒数），按时间排序需先转换。
-- 无法判断书签内容好坏——它只管结构整理，不管链接是否失效。
+- 没有"热编辑"：改文件时浏览器必须关着。
+- `date_added` 是 Chrome 时间戳（自 1601-01-01 的微秒），`bm.py` 已自动转日期。
+- 只管结构整理，不判断链接是否失效/内容好坏。
+- `detect` 的 macOS/Linux 分支与更多浏览器内核已实现，但**尚未在非 Windows 机器上实测**。
 
 ## License
 

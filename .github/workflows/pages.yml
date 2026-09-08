@@ -1,9 +1,20 @@
 name: pages
 
-# 项目全景观览站自动发布到 GitHub Pages：
-#   触发：push main（或手动 workflow_dispatch）
-#   产物：project_overview/ 整体作为站点根发布，skill 源码（SKILL.md / PROMPT.md / scripts/ 等）不裸露
-#   前提：仓库 Settings → Pages → Source 选「GitHub Actions」（仅需设置一次）
+# 项目全景观览站发布到 GitHub Pages。
+#
+# 当前状态：已禁用（gh workflow disable）。
+# 原因：账号因账单问题被锁定，Actions 无法运行。
+# 当前 Pages 走经典部署（build_type=legacy, source=main/docs），不依赖 Actions。
+#
+# 切回 Actions 模式（Actions 恢复后）：
+#   1. gh workflow enable pages.yml
+#   2. gh api -X PUT /repos/<owner>/<repo>/pages -f build_type=workflow
+#   3. 仓库 Settings → Pages → Source 选「GitHub Actions」
+#
+# 切回经典模式：
+#   gh api -X PUT /repos/<owner>/<repo>/pages -f build_type=legacy -f "source[branch]=main" -f "source[path]=/docs"
+#
+# 注意：两种模式下 docs/ 和 project_overview/ 需保持同步。
 on:
   push:
     branches: [main]

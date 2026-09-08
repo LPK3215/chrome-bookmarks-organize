@@ -143,8 +143,8 @@ python scripts/test/run_tests.py     # 54 项，零第三方依赖，约 1 秒
 - `SKILL.md` — 给 AI 看的操作规范（默认脚本 + 无脚本降级 + 流程 + Pitfalls + 验证）。可单独加载当提示词，不必下载整仓。
 - `scripts/bm.py` — 上述工具箱（单文件、零第三方依赖，10 个子命令）。
 - `scripts/visualization/` — 架构/流程示意图的**生成脚本**（`generate_workflow.py`、`generate_deliverables.py`，零第三方依赖）。图上文案有变时，改脚本后重跑即可再生成，不要手改 SVG。
-- `docs/` — 示意图成品（`workflow.svg`：0→7 带循环主流程；`deliverables.svg`：三份交付物从轻到全），由 `scripts/visualization/` 生成并入库。
-- `project_overview/`（+ 根 `project_overview.html` 跳转页） — **项目全景观览站**：静态单页（简介 / 架构 / 0→7 流程 / 目录 / 快速开始 / 测试质量 / 文档索引），由 `.github/workflows/pages.yml` 在 push main 后自动发布到 GitHub Pages（见顶部徽章入口），不是 skill 运行时的组成部分。
+- `docs/` — 示意图成品（`workflow.svg`、`deliverables.svg`）+ **全景观览站副本**（与 `project_overview/` 同步），由 `scripts/visualization/` 生成并入库。当前 GitHub Pages 走经典部署（`main/docs`）。
+- `project_overview/`（+ 根 `project_overview.html` 跳转页） — **项目全景观览站源目录**：静态单页（简介 / 架构 / 0→7 流程 / 目录 / 快速开始 / 测试质量 / 文档索引）。`docs/` 是其部署副本，保持同步。`.github/workflows/pages.yml` 已禁用（Actions 账单锁定），当前走经典部署——push main 后自动构建 `docs/` 发布到 GitHub Pages（见顶部徽章入口），不是 skill 运行时的组成部分。
 - `scripts/test/sample/` — **入库**的通用站点演示样例：真实公开网站合成的 before（乱 40 条）/ after（归好 38 条）一对 + 生成脚本，零隐私、`clone` 后立刻有靶子可练。
 - `scripts/test/run_tests.py` — 零依赖回归测试（54 项），改完 `bm.py` 请跑它。
 - `scripts/test/` — **不入库**的真实书签快照（裁剪过的 `Bookmarks.before`/`after`，含隐私，已被 `.gitignore` 屏蔽），本地验证脚本手感用。

@@ -68,7 +68,7 @@ detect 定位 → preflight 体检(GO/NO-GO) → backup 底牌 → show 读准�
 
 不要靠"相信某个工具"，按这三步自己验：
 
-1. **先在假数据上跑一遍**：`scripts/test/sample/` 是随仓库入库的虚构样例（18 条），跑完整个流程也碰不到你的真实数据——`diff` 的预期输出写在 `sample/README.md` 里，可以先对着看。
+1. **先在假数据上跑一遍**：`scripts/test/sample/` 是随仓库入库的**通用站点演示样例**（before 乱放 40 条 / after 归好 38 条，全是淘宝、GitHub 这类公开站点，零隐私），跑完整个流程也碰不到你的真实数据——`diff` 的预期输出写在 `sample/README.md` 里，可以先对着看。
 2. **`plan`/`preview`/`diff` 一个字节都不写进真身**，可以无限次预览到满意为止；`finalize` 是唯一写入口，且必须你明确拍板后才执行。
 3. **`backup` 会当场打印一行 `restore_cmd`**（绝对路径）。这行命令在你看到它的那一刻就生效了——先把它复制到记事本存好，再继续往下走。
 
@@ -119,7 +119,7 @@ python scripts/test/run_tests.py     # 48 项，零第三方依赖，约 1 秒
 - `PROMPT.md` — **零安装轻路径**：一段可直接复制给任意 AI 的纯文本提示词（`SKILL.md` 流程的压缩版，**无闸门**）。不 clone、一次性、想先体验或分享时用它。
 - `SKILL.md` — 给 AI 看的操作规范（默认脚本 + 无脚本降级 + 流程 + Pitfalls + 验证）。可单独加载当提示词，不必下载整仓。
 - `scripts/bm.py` — 上述工具箱（单文件、零第三方依赖，10 个子命令）。
-- `scripts/test/sample/` — **入库**的合成样例：虚构的 before/after 两份数据 + 生成脚本，`clone` 后立刻有靶子可练。
+- `scripts/test/sample/` — **入库**的通用站点演示样例：真实公开网站合成的 before（乱 40 条）/ after（归好 38 条）一对 + 生成脚本，零隐私、`clone` 后立刻有靶子可练。
 - `scripts/test/run_tests.py` — 零依赖回归测试（48 项），改完 `bm.py` 请跑它。
 - `scripts/test/` — **不入库**的真实书签快照（裁剪过的 `Bookmarks.before`/`after`，含隐私，已被 `.gitignore` 屏蔽），本地验证脚本手感用。
 - `MAINTENANCE.md` — 长期维护文档：**AI 判断 vs 脚本执行**的分工合同、脚本质量台账、边界矩阵、变更日志。

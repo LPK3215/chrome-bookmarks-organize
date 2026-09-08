@@ -264,7 +264,8 @@ class TestBackup(unittest.TestCase):
                 bm.main(["backup", "--file", src, "--dir", t])
             manifest = os.path.join(t, "_backup_manifest.txt")
             self.assertTrue(os.path.isfile(manifest))
-            rec = json.loads(open(manifest, encoding="utf-8").read().strip().splitlines()[-1])
+            with open(manifest, encoding="utf-8") as f:
+                rec = json.loads(f.read().strip().splitlines()[-1])
             cmd = rec["restore_cmd"]
             self.assertTrue(os.path.isabs(cmd.split('"')[1]))            # 解释器绝对路径
             self.assertTrue(os.path.isfile(rec["backup"]))               # 底牌真的存在

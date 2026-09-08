@@ -1,7 +1,7 @@
 ---
 name: chrome-bookmarks-organize
 description: 直接编辑 Chrome/Edge 的 Bookmarks JSON 文件，让 AI 整理浏览器书签（重排目录/改名/去重/排序），完全绕开"导出HTML→导入"的重复追加问题。用户要求整理收藏夹、批量修改书签结构时使用。
-version: 1.11.0
+version: 1.12.0
 ---
 
 # Chrome 书签直改整理
@@ -30,7 +30,7 @@ version: 1.11.0
 > 以下命令默认**脚本模式**。仅提示词时不要执行这些命令，改走「仅提示词时怎么做」。
 
 > **路径不写死**：先跑 `python scripts/bm.py detect` 让脚本按当前 OS 的环境变量自动定位所有 Profile 的 `Bookmarks`（列修改时间 / url 数 / 标"疑似在用"，并从 `Local State` 读出 Profile 显示名），**与用户确认整理哪一个**再往下。若浏览器用 `--user-data-dir` 挪过位置：`python scripts/bm.py detect --root "<你的根>"`，或给任何命令直接显式传 `--file`。
-> 原理（"相对死"而非"直接死"）：`Bookmarks` 这个文件名 + `<根>/<Profile>/Bookmarks` 的相对结构是 Chrome 固定契约，用户改不了，故写死合理；唯一会变的是"根"——Windows `%LOCALAPPDATA%`、macOS `~/Library/Application Support`、Linux `~/.config`——交给 `detect` 从环境变量探，不烙进脚本。手动兜底路径：Chrome(Windows) `%LOCALAPPDATA%\Google\Chrome\User Data\<Profile>\Bookmarks`（Edge 把 `Google\Chrome` 换 `Microsoft\Edge`；macOS 在 `.../Google/Chrome/<Profile>/Bookmarks`、无 `User Data` 层）。本仓 `scripts/test/sample/` 是**入库的合成样例**（虚构数据，clone 即有），练手先用它；`scripts/test/` 根下的 `Bookmarks.*` 是真实快照对比案例（含隐私、不入库，见其 README）。
+> 原理（"相对死"而非"直接死"）：`Bookmarks` 这个文件名 + `<根>/<Profile>/Bookmarks` 的相对结构是 Chrome 固定契约，用户改不了，故写死合理；唯一会变的是"根"——Windows `%LOCALAPPDATA%`、macOS `~/Library/Application Support`、Linux `~/.config`——交给 `detect` 从环境变量探，不烙进脚本。手动兜底路径：Chrome(Windows) `%LOCALAPPDATA%\Google\Chrome\User Data\<Profile>\Bookmarks`（Edge 把 `Google\Chrome` 换 `Microsoft\Edge`；macOS 在 `.../Google/Chrome/<Profile>/Bookmarks`、无 `User Data` 层）。本仓 `scripts/test/sample/` 是**入库的通用站点演示样例**（淘宝/GitHub 等公开网站合成，before 乱 40 条 / after 归好 38 条，零隐私、clone 即有），练手先用它；`scripts/test/` 根下的 `Bookmarks.*` 是真实快照对比案例（含隐私、不入库，见其 README）。
 
 0. **定位 + 体检（GO/NO-GO 闸门）**
    - 定位：`python scripts/bm.py detect`（按 OS 环境变量扫出候选，标"疑似在用"）→ 与用户确认整理哪一个，得到 `<Bookmarks>`。
@@ -124,5 +124,5 @@ version: 1.11.0
 
 - 脚本模式：第 5 步 `verify` 三项全绿，且 `--before` 对账差额＝预期去重数。仅提示词：硬约束第 7 条复验通过。
 - 用户重启 Chrome/Edge 后结构生效、链接可点。
-- 脚本模式改真实数据前，先在 `scripts/test/sample/`（入库的虚构样例，18 条）上把 `preflight→backup→show→plan→preview→finalize→verify→diff→restore` 整条跑一遍、确认手感再上；`sample/README.md` 里写了每步的预期输出。想用更接近真实的结构，再用本地那份含隐私的快照。仅提示词没有这份靶场，更要先备份、先问「退浏览器了吗」。
+- 脚本模式改真实数据前，先在 `scripts/test/sample/`（入库的通用站点演示样例，before 40 条 / after 38 条）上把 `preflight→backup→show→plan→preview→finalize→verify→diff→restore` 整条跑一遍、确认手感再上；`sample/README.md` 里写了每步的预期输出。想用更接近真实的结构，再用本地那份含隐私的快照。仅提示词没有这份靶场，更要先备份、先问「退浏览器了吗」。
 - 改动 `bm.py` 后必须跑回归：`python scripts/test/run_tests.py`（48 项，零第三方依赖，~1 秒）。它锁住的是安全不变量——去重保留最新、跨目录不去重、两个安全闸、原子写回、结构闸门、路径感知对账。测试红了就是护栏松了，先修再往下走。

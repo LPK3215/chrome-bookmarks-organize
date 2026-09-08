@@ -2,16 +2,18 @@
 
 本目录是 `bm.py` 的验证场所，里面住着**两套数据**，性质完全不同：
 
-## A. `sample/` —— 合成样例（**入库**，零隐私）
+## A. `sample/` —— 通用站点演示样例（**入库**，零隐私）
 
-虚构的 18 条书签，随仓库分发。任何人 clone 之后立刻有靶子可练。
+用**真实通用网站**合成的演示数据（淘宝/京东、新浪/澎湃、GitHub/MDN、B站/12306……），
+before 乱放、after 按「购物/新闻资讯/技术开发/学习资源/视频娱乐/生活工具/博客与阅读」
+七类归好。随仓库分发，任何人 clone 之后立刻有靶子可练。**没有一条是个人收藏**。
 详见 [sample/README.md](sample/README.md)。
 
 ```bash
 python scripts/bm.py show --file scripts/test/sample/Bookmarks.before --stats
 python scripts/bm.py diff --a scripts/test/sample/Bookmarks.before --b scripts/test/sample/Bookmarks.after
 ```
-预期输出：`diff` 报 **删 2 / 增 2 / 移动 2**。
+预期输出：`diff` 报 **删 1 / 增 0 / 移动 38 / 改名 0 / 副本减少 1**（净变化 `40 -> 38`）。
 
 ## B. 本目录下的 `Bookmarks.*` —— 真实书签快照（**不入库**）
 

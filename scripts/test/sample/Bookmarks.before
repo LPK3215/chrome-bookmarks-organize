@@ -1,251 +1,384 @@
 {
-   "checksum": "0000000000000000000000000000000000000000",
    "roots": {
       "bookmark_bar": {
          "children": [
             {
-               "children": [
-                  {
-                     "date_added": "13353724800000000",
-                     "guid": "sample-guid-4700",
-                     "id": "1",
-                     "name": "MDN Web 文档",
-                     "type": "url",
-                     "url": "https://developer.mozilla.org/"
-                  },
-                  {
-                     "date_added": "13336272000000000",
-                     "guid": "sample-guid-4700",
-                     "id": "2",
-                     "name": "MDN Web 文档",
-                     "type": "url",
-                     "url": "https://developer.mozilla.org/"
-                  },
-                  {
-                     "children": [
-                        {
-                           "date_added": "13359081600000000",
-                           "guid": "sample-guid-1150",
-                           "id": "3",
-                           "name": "CSS Tricks",
-                           "type": "url",
-                           "url": "https://css-tricks.com/"
-                        },
-                        {
-                           "date_added": "13359168000000000",
-                           "guid": "sample-guid-1618",
-                           "id": "4",
-                           "name": "Can I use",
-                           "type": "url",
-                           "url": "https://caniuse.com/"
-                        }
-                     ],
-                     "date_added": "13358995200000000",
-                     "date_last_used": "0",
-                     "guid": "sample-folder-5275",
-                     "id": "5",
-                     "name": "前端",
-                     "type": "folder"
-                  },
-                  {
-                     "children": [
-                        {
-                           "date_added": "13357180800000000",
-                           "guid": "sample-guid-1187",
-                           "id": "6",
-                           "name": "Python 官方文档",
-                           "type": "url",
-                           "url": "https://docs.python.org/"
-                        },
-                        {
-                           "date_added": "13357267200000000",
-                           "guid": "sample-guid-7723",
-                           "id": "7",
-                           "name": "Go by Example",
-                           "type": "url",
-                           "url": "https://gobyexample.com/"
-                        }
-                     ],
-                     "date_added": "13356403200000000",
-                     "date_last_used": "0",
-                     "guid": "sample-folder-9758",
-                     "id": "8",
-                     "name": "后端",
-                     "type": "folder"
-                  }
-               ],
-               "date_added": "13348627200000000",
-               "date_last_used": "0",
-               "guid": "sample-folder-1518",
+               "date_added": "13327545600000000",
+               "guid": "demo-0001",
+               "id": "1",
+               "name": "淘宝网",
+               "type": "url",
+               "url": "https://www.taobao.com/"
+            },
+            {
+               "date_added": "13330656000000000",
+               "guid": "demo-0005",
+               "id": "5",
+               "name": "苏宁易购",
+               "type": "url",
+               "url": "https://www.suning.com/"
+            },
+            {
+               "date_added": "13321065600000000",
+               "guid": "demo-0009",
                "id": "9",
-               "name": "开发",
-               "type": "folder"
+               "name": "澎湃新闻",
+               "type": "url",
+               "url": "https://www.thepaper.cn/"
             },
             {
-               "children": [
-                  {
-                     "date_added": "13382841600000000",
-                     "guid": "sample-guid-783",
-                     "id": "10",
-                     "name": "示例论文站",
-                     "type": "url",
-                     "url": "https://example-papers.test/"
-                  },
-                  {
-                     "date_added": "13382928000000000",
-                     "guid": "sample-guid-4590",
-                     "id": "11",
-                     "name": "示例模型卡",
-                     "type": "url",
-                     "url": "https://example-models.test/"
-                  }
-               ],
-               "date_added": "13380508800000000",
-               "date_last_used": "0",
-               "guid": "sample-folder-4024",
-               "id": "12",
-               "name": "AI",
-               "type": "folder"
+               "date_added": "13307587200000000",
+               "guid": "demo-0013",
+               "id": "13",
+               "name": "GitHub",
+               "type": "url",
+               "url": "https://github.com/"
             },
             {
-               "children": [
-                  {
-                     "date_added": "13393209600000000",
-                     "guid": "sample-guid-3141",
-                     "id": "13",
-                     "name": "示例新闻站",
-                     "type": "url",
-                     "url": "https://example-news.test/"
-                  },
-                  {
-                     "date_added": "13393296000000000",
-                     "guid": "sample-guid-4712",
-                     "id": "14",
-                     "name": "示例论坛",
-                     "type": "url",
-                     "url": "https://example-forum.test/"
-                  },
-                  {
-                     "date_added": "13393382400000000",
-                     "guid": "sample-guid-1757",
-                     "id": "15",
-                     "name": "示例工具站",
-                     "type": "url",
-                     "url": "https://example-tools.test/"
-                  }
-               ],
-               "date_added": "13390531200000000",
-               "date_last_used": "0",
-               "guid": "sample-folder-3349",
-               "id": "16",
-               "name": "常读",
-               "type": "folder"
+               "date_added": "13333507200000000",
+               "guid": "demo-0017",
+               "id": "17",
+               "name": "阮一峰的网络日志",
+               "type": "url",
+               "url": "https://www.ruanyifeng.com/blog/"
             },
             {
-               "children": [
-                  {
-                     "date_added": "13395801600000000",
-                     "guid": "sample-guid-1757",
-                     "id": "17",
-                     "name": "示例工具站",
-                     "type": "url",
-                     "url": "https://example-tools.test/"
-                  },
-                  {
-                     "date_added": "13385260800000000",
-                     "guid": "sample-guid-9355",
-                     "id": "18",
-                     "name": "待删除-A",
-                     "type": "url",
-                     "url": "https://example-drop-a.test/"
-                  },
-                  {
-                     "date_added": "13385347200000000",
-                     "guid": "sample-guid-6096",
-                     "id": "19",
-                     "name": "待删除-B",
-                     "type": "url",
-                     "url": "https://example-drop-b.test/"
-                  },
-                  {
-                     "date_added": "13385433600000000",
-                     "guid": "sample-guid-9271",
-                     "id": "20",
-                     "name": "待移动",
-                     "type": "url",
-                     "url": "https://example-move.test/"
-                  }
-               ],
-               "date_added": "13385260800000000",
-               "date_last_used": "0",
-               "guid": "sample-folder-9467",
+               "date_added": "13338172800000000",
+               "guid": "demo-0021",
                "id": "21",
-               "name": "工具箱",
+               "name": "学堂在线",
+               "type": "url",
+               "url": "https://www.xuetangx.com/"
+            },
+            {
+               "date_added": "13305600000000000",
+               "guid": "demo-0025",
+               "id": "25",
+               "name": "bilibili",
+               "type": "url",
+               "url": "https://www.bilibili.com/"
+            },
+            {
+               "date_added": "13345948800000000",
+               "guid": "demo-0029",
+               "id": "29",
+               "name": "芒果TV",
+               "type": "url",
+               "url": "https://www.mgtv.com/"
+            },
+            {
+               "date_added": "13341542400000000",
+               "guid": "demo-0033",
+               "id": "33",
+               "name": "大众点评",
+               "type": "url",
+               "url": "https://www.dianping.com/"
+            },
+            {
+               "date_added": "13334198400000000",
+               "guid": "demo-0037",
+               "id": "37",
+               "name": "少数派",
+               "type": "url",
+               "url": "https://sspai.com/"
+            },
+            {
+               "date_added": "13298947200000000",
+               "guid": "demo-0039",
+               "id": "39",
+               "name": "大众点评",
+               "type": "url",
+               "url": "https://www.dianping.com/"
+            },
+            {
+               "children": [
+                  {
+                     "date_added": "13327545600000000",
+                     "guid": "demo-0002",
+                     "id": "2",
+                     "name": "京东",
+                     "type": "url",
+                     "url": "https://www.jd.com/"
+                  },
+                  {
+                     "date_added": "13354934400000000",
+                     "guid": "demo-0006",
+                     "id": "6",
+                     "name": "亚马逊中国",
+                     "type": "url",
+                     "url": "https://www.amazon.cn/"
+                  },
+                  {
+                     "date_added": "13325472000000000",
+                     "guid": "demo-0010",
+                     "id": "10",
+                     "name": "新华社",
+                     "type": "url",
+                     "url": "https://www.news.cn/"
+                  },
+                  {
+                     "date_added": "13317350400000000",
+                     "guid": "demo-0014",
+                     "id": "14",
+                     "name": "Stack Overflow",
+                     "type": "url",
+                     "url": "https://stackoverflow.com/"
+                  },
+                  {
+                     "date_added": "13357872000000000",
+                     "guid": "demo-0018",
+                     "id": "18",
+                     "name": "LeetCode",
+                     "type": "url",
+                     "url": "https://leetcode.cn/"
+                  },
+                  {
+                     "date_added": "13310611200000000",
+                     "guid": "demo-0022",
+                     "id": "22",
+                     "name": "知乎",
+                     "type": "url",
+                     "url": "https://www.zhihu.com/"
+                  },
+                  {
+                     "date_added": "13312598400000000",
+                     "guid": "demo-0026",
+                     "id": "26",
+                     "name": "YouTube",
+                     "type": "url",
+                     "url": "https://www.youtube.com/"
+                  },
+                  {
+                     "date_added": "13306464000000000",
+                     "guid": "demo-0030",
+                     "id": "30",
+                     "name": "网易云音乐",
+                     "type": "url",
+                     "url": "https://music.163.com/"
+                  },
+                  {
+                     "date_added": "13352342400000000",
+                     "guid": "demo-0034",
+                     "id": "34",
+                     "name": "中国天气网",
+                     "type": "url",
+                     "url": "https://www.weather.com.cn/"
+                  },
+                  {
+                     "date_added": "13343875200000000",
+                     "guid": "demo-0038",
+                     "id": "38",
+                     "name": "即刻",
+                     "type": "url",
+                     "url": "https://web.okjike.com/"
+                  },
+                  {
+                     "date_added": "13261881600000000",
+                     "guid": "demo-0040",
+                     "id": "40",
+                     "name": "失效-个人主页(已打不开)",
+                     "type": "url",
+                     "url": "https://dead.example.net/old"
+                  }
+               ],
+               "date_added": "13318214400000000",
+               "date_last_used": "0",
+               "guid": "demo-0041",
+               "id": "41",
+               "name": "新建文件夹",
+               "type": "folder"
+            },
+            {
+               "children": [
+                  {
+                     "date_added": "13349491200000000",
+                     "guid": "demo-0003",
+                     "id": "3",
+                     "name": "拼多多",
+                     "type": "url",
+                     "url": "https://www.pinduoduo.com/"
+                  },
+                  {
+                     "date_added": "13311820800000000",
+                     "guid": "demo-0007",
+                     "id": "7",
+                     "name": "新浪新闻",
+                     "type": "url",
+                     "url": "https://news.sina.com.cn/"
+                  },
+                  {
+                     "date_added": "13337308800000000",
+                     "guid": "demo-0011",
+                     "id": "11",
+                     "name": "BBC 中文",
+                     "type": "url",
+                     "url": "https://www.bbc.com/zhongwen/simp"
+                  },
+                  {
+                     "date_added": "13323744000000000",
+                     "guid": "demo-0015",
+                     "id": "15",
+                     "name": "MDN Web 文档",
+                     "type": "url",
+                     "url": "https://developer.mozilla.org/zh-CN/"
+                  },
+                  {
+                     "date_added": "13320460800000000",
+                     "guid": "demo-0019",
+                     "id": "19",
+                     "name": "中国大学MOOC",
+                     "type": "url",
+                     "url": "https://www.icourse163.org/"
+                  },
+                  {
+                     "date_added": "13329878400000000",
+                     "guid": "demo-0023",
+                     "id": "23",
+                     "name": "维基百科",
+                     "type": "url",
+                     "url": "https://zh.wikipedia.org/"
+                  },
+                  {
+                     "date_added": "13322707200000000",
+                     "guid": "demo-0027",
+                     "id": "27",
+                     "name": "爱奇艺",
+                     "type": "url",
+                     "url": "https://www.iqiyi.com/"
+                  },
+                  {
+                     "date_added": "13317004800000000",
+                     "guid": "demo-0031",
+                     "id": "31",
+                     "name": "铁路12306",
+                     "type": "url",
+                     "url": "https://www.12306.cn/"
+                  },
+                  {
+                     "date_added": "13335408000000000",
+                     "guid": "demo-0035",
+                     "id": "35",
+                     "name": "百度翻译",
+                     "type": "url",
+                     "url": "https://fanyi.baidu.com/"
+                  }
+               ],
+               "date_added": "13321324800000000",
+               "date_last_used": "0",
+               "guid": "demo-0042",
+               "id": "42",
+               "name": "新建文件夹 (1)",
+               "type": "folder"
+            },
+            {
+               "children": [
+                  {
+                     "date_added": "13339728000000000",
+                     "guid": "demo-0004",
+                     "id": "4",
+                     "name": "天猫",
+                     "type": "url",
+                     "url": "https://www.tmall.com/"
+                  },
+                  {
+                     "date_added": "13316832000000000",
+                     "guid": "demo-0008",
+                     "id": "8",
+                     "name": "网易新闻",
+                     "type": "url",
+                     "url": "https://news.163.com/"
+                  },
+                  {
+                     "date_added": "13361673600000000",
+                     "guid": "demo-0012",
+                     "id": "12",
+                     "name": "纽约时报中文网",
+                     "type": "url",
+                     "url": "https://cn.nytimes.com/"
+                  },
+                  {
+                     "date_added": "13353552000000000",
+                     "guid": "demo-0016",
+                     "id": "16",
+                     "name": "掘金",
+                     "type": "url",
+                     "url": "https://juejin.cn/"
+                  },
+                  {
+                     "date_added": "13332124800000000",
+                     "guid": "demo-0020",
+                     "id": "20",
+                     "name": "Coursera",
+                     "type": "url",
+                     "url": "https://www.coursera.org/"
+                  },
+                  {
+                     "date_added": "13349059200000000",
+                     "guid": "demo-0024",
+                     "id": "24",
+                     "name": "可汗学院",
+                     "type": "url",
+                     "url": "https://zh.khanacademy.org/"
+                  },
+                  {
+                     "date_added": "13327027200000000",
+                     "guid": "demo-0028",
+                     "id": "28",
+                     "name": "腾讯视频",
+                     "type": "url",
+                     "url": "https://v.qq.com/"
+                  },
+                  {
+                     "date_added": "13327804800000000",
+                     "guid": "demo-0032",
+                     "id": "32",
+                     "name": "高德地图",
+                     "type": "url",
+                     "url": "https://www.amap.com/"
+                  },
+                  {
+                     "date_added": "13360636800000000",
+                     "guid": "demo-0036",
+                     "id": "36",
+                     "name": "顺丰速运",
+                     "type": "url",
+                     "url": "https://www.sf-express.com/"
+                  }
+               ],
+               "date_added": "13324176000000000",
+               "date_last_used": "0",
+               "guid": "demo-0043",
+               "id": "43",
+               "name": "新建文件夹 (2)",
                "type": "folder"
             }
          ],
          "date_added": "13348540800000000",
          "date_last_used": "0",
-         "guid": "sample-folder-8404",
-         "id": "22",
+         "guid": "demo-0044",
+         "id": "44",
          "name": "书签栏",
          "type": "folder"
       },
       "other": {
-         "children": [
-            {
-               "date_added": "13374892800000000",
-               "guid": "sample-guid-4171",
-               "id": "23",
-               "name": "示例归档文章",
-               "type": "url",
-               "url": "https://example-archive.test/"
-            },
-            {
-               "children": [
-                  {
-                     "date_added": "13345862400000000",
-                     "guid": "sample-guid-8536",
-                     "id": "24",
-                     "name": "示例旧链接",
-                     "type": "url",
-                     "url": "https://example-old.test/"
-                  }
-               ],
-               "date_added": "13345862400000000",
-               "date_last_used": "0",
-               "guid": "sample-folder-9675",
-               "id": "25",
-               "name": "旧杂物",
-               "type": "folder"
-            }
-         ],
-         "date_added": "13372214400000000",
+         "children": [],
+         "date_added": "13348540800000000",
          "date_last_used": "0",
-         "guid": "sample-folder-6047",
-         "id": "26",
+         "guid": "demo-0045",
+         "id": "45",
          "name": "其他书签",
          "type": "folder"
       },
       "synced": {
-         "children": [
-            {
-               "date_added": "13380163200000000",
-               "guid": "sample-guid-1844",
-               "id": "27",
-               "name": "手机上存的示例页",
-               "type": "url",
-               "url": "https://example-mobile.test/"
-            }
-         ],
-         "date_added": "13380163200000000",
+         "children": [],
+         "date_added": "13348540800000000",
          "date_last_used": "0",
-         "guid": "sample-folder-2283",
-         "id": "28",
+         "guid": "demo-0046",
+         "id": "46",
          "name": "移动设备书签",
          "type": "folder"
       }
    },
-   "sync_metadata": "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF",
-   "version": 1
+   "version": 1,
+   "checksum": "0000000000000000000000000000000000000000"
 }

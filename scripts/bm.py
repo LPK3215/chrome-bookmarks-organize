@@ -651,6 +651,21 @@ def cmd_finalize(args):
         sys.exit("[finalize] ✗ 候选文件结构非法（缺 roots / bookmark_bar|other|synced），拒绝写回目标。"
                  "请检查 --from 是否指向正常的书签 JSON。")
 
+    # 数量护栏：AI 改 JSON 时最容易犯的是「不小心把书签丢了一半」。
+    # 空候选几乎肯定是候选生成错了；数量远低于真身则可能是大清理，也可能是丢数据——只告警不拦。
+    n_cand = count_urls(data)
+    if n_cand == 0:
+        sys.exit("[finalize] ✗ 候选里 0 条书签：几乎肯定是候选生成错了，拒绝写回（你的真身没动）。"
+                 "请回到 plan/preview 重新产出候选。")
+    if os.path.exists(args.target):
+        try:
+            n_tgt = count_urls(load(args.target))
+        except Exception:
+            n_tgt = None
+        if n_tgt is not None and n_cand < n_tgt * 0.5:
+            print(f"[finalize] ⚠ 候选仅 {n_cand} 条，远低于真身 {n_tgt} 条（<50%）："
+                  f"这要么是一次大清理，要么是候选把数据弄丢了。确认无误后忽略此警告即可。")
+
     # 目标闸门：防止把候选盖到一个「根本不是书签」的文件上（--target 手误最常见）
     if os.path.exists(args.target) and not args.force:
         try:

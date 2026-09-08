@@ -1,7 +1,7 @@
 ---
 name: chrome-bookmarks-organize
 description: 直接编辑 Chrome/Edge 的 Bookmarks JSON 文件，让 AI 整理浏览器书签（重排目录/改名/去重/排序），完全绕开"导出HTML→导入"的重复追加问题。用户要求整理收藏夹、批量修改书签结构时使用。
-version: 1.9.0
+version: 1.10.0
 ---
 
 # Chrome 书签直改整理
@@ -125,4 +125,4 @@ version: 1.9.0
 - 脚本模式：第 5 步 `verify` 三项全绿，且 `--before` 对账差额＝预期去重数。仅提示词：硬约束第 7 条复验通过。
 - 用户重启 Chrome/Edge 后结构生效、链接可点。
 - 脚本模式改真实数据前，先在 `scripts/test/sample/`（入库的虚构样例，18 条）上把 `preflight→backup→show→plan→preview→finalize→verify→diff→restore` 整条跑一遍、确认手感再上；`sample/README.md` 里写了每步的预期输出。想用更接近真实的结构，再用本地那份含隐私的快照。仅提示词没有这份靶场，更要先备份、先问「退浏览器了吗」。
-- 改动 `bm.py` 后必须跑回归：`python scripts/test/run_tests.py`（46 项，零第三方依赖，~1 秒）。它锁住的是安全不变量——去重保留最新、跨目录不去重、两个安全闸、原子写回、结构闸门、路径感知对账。测试红了就是护栏松了，先修再往下走。
+- 改动 `bm.py` 后必须跑回归：`python scripts/test/run_tests.py`（48 项，零第三方依赖，~1 秒）。它锁住的是安全不变量——去重保留最新、跨目录不去重、两个安全闸、原子写回、结构闸门、路径感知对账。测试红了就是护栏松了，先修再往下走。

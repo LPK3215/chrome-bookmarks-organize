@@ -447,7 +447,10 @@ class TestProfileOccupancy(unittest.TestCase):
         write(os.path.join(self.prof, "Preferences"), {"sync": {"x": 1}})   # Profile 指纹
         self.target = write(os.path.join(self.prof, "Bookmarks"),
                             bookmarks([node("A", "https://a.test/", 2024, 1, 1, "1")]))
-        self.cand = write(os.path.join(self.dir.name, "cand"), bookmarks([]))
+        # 注意：候选必须是非空书签——否则会先撞上 finalize 的"空候选"护栏，
+        # 就测不到本类真正要测的「Profile 占用锁」拦截了。
+        self.cand = write(os.path.join(self.dir.name, "cand"),
+                         bookmarks([node("A", "https://a.test/", 2024, 1, 1, "1")]))
 
     def tearDown(self):
         self.dir.cleanup()
@@ -597,6 +600,26 @@ class TestFinalizeSelfTarget(unittest.TestCase):
         with NoBrowser([]):
             run(["finalize", "--from", self.f, "--target", self.f, "--force"])
         self.assertNotIn("checksum", bm.load(self.f))   # --force 放行后确实写回成功
+
+    def test_refuses_empty_candidate(self):
+        empty = write(os.path.join(self.dir.name, "empty"), bookmarks([]))
+        with NoBrowser([]):
+            msg = run(["finalize", "--from", empty, "--target", self.f])
+        self.assertIn("0 条书签", msg)
+        self.assertEqual(bm.count_urls(bm.load(self.f)), 1)   # 真身没动
+        self.assertFalse(any(".prescript-" in x for x in os.listdir(self.dir.name)))
+
+    def test_warns_on_large_count_drop_but_still_writes(self):
+        # 真身放 4 条，候选只 1 条 —— 触发 <50% 告警，但不拦截
+        big = write(os.path.join(self.dir.name, "big"),
+                    bookmarks([node(f"u{i}", f"https://u{i}.test/", 2024, 1, i, str(i)) for i in range(1, 5)]))
+        small = write(os.path.join(self.dir.name, "small"),
+                      bookmarks([node("A", "https://a.test/", 2024, 1, 1, "1")]))
+        buf = io.StringIO()
+        with NoBrowser([]), redirect_stdout(buf):
+            run(["finalize", "--from", small, "--target", big])
+        self.assertIn("远低于真身", buf.getvalue())              # 告警
+        self.assertEqual(bm.count_urls(bm.load(big)), 1)        # 仍写回成功（非拦截）
 
 
 if __name__ == "__main__":

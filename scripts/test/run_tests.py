@@ -391,6 +391,52 @@ class TestDetectRoots(unittest.TestCase):
         self.assertNotIn("Users", roots["Chrome"])       # 不许出现 C:\Users\某名\... 这种烙死的路径
 
 
+class TestPreflightSyncAwareness(unittest.TestCase):
+    """preflight 要在动手前把"云端不是备份"这件事讲清楚——脚本管不了合并，但能管住认知。"""
+
+    def _profile(self, **with_what):
+        d = tempfile.TemporaryDirectory()
+        prof = os.path.join(d.name, "Default")
+        os.makedirs(prof, exist_ok=True)
+        if with_what.get("sync_dir"):
+            os.makedirs(os.path.join(prof, "Sync Data"), exist_ok=True)
+        if "preferences" in with_what:
+            write(os.path.join(prof, "Preferences"), with_what["preferences"])
+        self._saved = d
+        return os.path.join(prof, "Bookmarks")
+
+    def tearDown(self):
+        if getattr(self, "_saved", None):
+            self._saved.cleanup()
+
+    def test_detects_sync_dir(self):
+        self.assertTrue(any("Sync Data" in r for r in bm.sync_signals(self._profile(sync_dir=True))))
+
+    def test_detects_preferences_sync_key(self):
+        reasons = bm.sync_signals(self._profile(preferences={"sync": {"anything": 1}}))
+        self.assertTrue(any("sync" in r for r in reasons))
+
+    def test_no_false_claim_on_clean_profile(self):
+        self.assertEqual(bm.sync_signals(self._profile()), [])
+
+    def test_preflight_prints_cloud_warning_without_blocking(self):
+        d = tempfile.TemporaryDirectory()
+        prof = os.path.join(d.name, "Default")
+        os.makedirs(os.path.join(prof, "Sync Data"))
+        write(os.path.join(prof, "Preferences"), {"sync": {"x": 1}})
+        target = write(os.path.join(prof, "Bookmarks"), bookmarks([]))
+        try:
+            buf = io.StringIO()
+            with NoBrowser([]), redirect_stdout(buf):
+                bm.main(["preflight", "--file", target])
+            out = buf.getvalue()
+        finally:
+            d.cleanup()
+        self.assertIn("云端同步", out)
+        self.assertIn("云端不是备份", out)
+        self.assertIn("GO", out)   # 提示归提示，不构成 NO-GO
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
 

@@ -739,6 +739,33 @@ def cmd_restore(args):
 
 
 # --------------------------- preflight (只读·GO/NO-GO) ---------------------------
+def sync_signals(bookmarks_path):
+    """尽力判断目标 Profile 是否开着云端同步，返回「依据」列表（可能为空）。
+
+    为什么要猜这个：脚本管不了浏览器的合并行为，但可以**在动手前把风险讲清楚**。
+    宁可知之为不知：探测不到就如实说没发现，不当作"没开同步"的证明。
+    浏览器版本差异很大，这里只取几条稳定的外部痕迹。
+    """
+    prof = os.path.dirname(os.path.abspath(bookmarks_path))
+    reasons = []
+    if os.path.isdir(os.path.join(prof, "Sync Data")):
+        reasons.append("存在 Sync Data/ 目录 — Chrome 启用同步后会生成")
+    pref = os.path.join(prof, "Preferences")
+    if os.path.isfile(pref):
+        try:
+            with open(pref, "r", encoding="utf-8-sig") as f:
+                data = json.load(f)
+            if isinstance(data, dict):
+                for key, human in (("sync", "Preferences 含 sync 段"),
+                                   ("account_info", "Preferences 含 account_info（已登录账号）"),
+                                   ("signin", "Preferences 含 signin 段")):
+                    if key in data:
+                        reasons.append(human)
+        except Exception:
+            pass
+    return reasons
+
+
 def cmd_preflight(args):
     f = args.file
     problems = []
@@ -771,6 +798,18 @@ def cmd_preflight(args):
         problems.append("目标不可写(只读/权限)")
 
     print(f"  · 同目录 Bookmarks.bak: {'存在(finalize 会改名防回滚)' if os.path.exists(f + '.bak') else '无'}")
+
+    # 脚本管不了浏览器的云端合并行为 —— 但至少要在动手前把这件事讲清楚
+    reasons = sync_signals(f)
+    if reasons:
+        print(f"  ⚠ 该 Profile 很可能开着云端同步（{'；'.join(reasons)}）")
+        print("    → 好处：改完会自动同步到你的账号；")
+        print("    → **风险：误删也会跟着传播到所有设备。云端不是备份，而是复制品。**")
+        print("    → 因此：改完先重启核对，确认无误再让它同步；一旦同步上线就没有回头键，只能 restore 底牌。")
+    else:
+        print("  · 未发现同步迹象（不代表一定没开，请以浏览器里显示的同步状态为准）")
+    print(f"  · 建议：动手前把整个 Profile 目录复制一份（{os.path.dirname(os.path.abspath(f))}）——"
+          "这比单文件的 bm.py backup 更彻底，连 Preferences 一起保下来。")
 
     running, ok = _browser_processes_running()
     if running:

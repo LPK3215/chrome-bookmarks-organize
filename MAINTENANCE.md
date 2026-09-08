@@ -69,6 +69,7 @@
 | 超大全树刷屏 | `show --depth N` / `--stats` + >300 条自动提醒 | ✅ |
 | Windows 中文控制台乱码 | stdout + stderr 均 `reconfigure(utf-8)` | ✅ |
 | **`--target` 指错文件（把候选盖到 Preferences）** | `finalize` 校验目标能解析出 `roots`，否则拒绝，确要覆盖才 `--force` | ✅（有单测） |
+| **目标 Profile 开着云端同步，误删会传播** | 脚本管不了浏览器的合并行为 → `preflight` 明确提示（并区分"未发现迹象"而非谎称没开）+ SKILL Pitfalls 写明"云端是复制品不是备份" + 阶梯 L2/L3 要求先做**整个 Profile 目录副本** | 提示已实现；行为保证只能靠阶梯验证 |
 | **护栏被后来的改动悄悄破坏** | `scripts/test/run_tests.py` 28 项回归 + CI 三平台；已做变异验证（把去重比较符改反→测试立刻变红） | ✅ |
 | **写回写到一半失败（磁盘满/被占用）** | 先写 `.tmp` 再 `os.replace` 原子替换，真身永不为半截 JSON | ✅（代码就位） |
 | **候选文件本身是垃圾/结构非法** | `finalize` 先验证 `roots` 与三个根之一，不合法直接拒绝写回 | ✅ |
@@ -101,7 +102,53 @@
 - **测试铁律**：`finalize` 的 `--target` 永远只指**临时目录里的副本**，绝不指向真实 Chrome/Edge Profile，也不要指向 `test/Bookmarks.*`（那是基准，不是靶子）。真实 Profile 仅在最终正式整理、且浏览器完全退出时才当 target。
 - **隐私**：`test/Bookmarks.*` 源自真实书签（虽已裁剪），绝不入库/外推；将来换成彻底脱敏/虚构数据后可解除忽略。详见 `scripts/test/README.md`。
 
-## 7. 变更日志
+## 7. 真实场景验收阶梯（第一次动真 Profile 之前）
+
+脚本能证明"文件写对了"，但**证明不了浏览器会不会认账**。这部分没有捷径，只能分级试——好消息是：
+**前两级的风险是零，而它们已经能回答你绝大部分的担心。**
+
+| 阶梯 | 对象 | 做什么 | 能验证什么 | 风险 |
+|---|---|---|---|---|
+| **L0 合成样例** | `test/sample/` | 跑完整链路，**不开浏览器** | 脚本逻辑、diff 分类、门禁 | 零 |
+| **L1 一次性 Profile** | 新建的临时 Profile | 真实 Chrome 完整跑一遍，**含重启** | **浏览器会不会认账**：重启后结构生效吗、checksum 有没有自动重建、`.bak` 行为、以及最要命的习惯——"彻底退出浏览器再动手" | **零**（里面没有值得丢的东西） |
+| **L2 只读动作** | 真实 Profile | 只做 `--sort` 或改一个目录名 | 真实文件权限、多 Profile 识别、同步提示 | 极低（有底牌 + Profile 整目录副本） |
+| **L3 完整整理** | 真实 Profile | 去重 / 归类 / 删除 | 全部 | 中（唯一保险＝底牌） |
+
+### L1 怎么做（强烈建议先做这一步）
+
+用 `--user-data-dir` 让 Chrome 在一个**全新的临时目录**里启一个新 Profile：
+
+```bash
+# Windows（关掉正在跑的 Chrome 之后）
+"C:\Program Files\Google\Chrome\Application\chrome.exe" --user-data-dir="C:\bm-drill"
+```
+
+在里面随便添加二三十条书签（故意留几条重复链接），**完全退出**，然后走完整流程：
+
+```bash
+python scripts/bm.py detect --root "C:\bm-drill"
+python scripts/bm.py preflight --file "<探到的 Bookmarks>"
+python scripts/bm.py backup    --file "<Bookmarks>"
+python scripts/bm.py plan      --file "<Bookmarks>" --out cand --sort --dedup
+python scripts/bm.py preview   --file cand --base "<Bookmarks>" --out p.html
+python scripts/bm.py finalize  --from cand --target "<Bookmarks>"     # 此时浏览器已退
+python scripts/bm.py verify    --file "<Bookmarks>" --before "<底牌>"
+```
+
+再**重新打开 Chrome**（同样带 `--user-data-dir`），看结构有没有生效、链接能不能打开。
+
+这一步会得到三样东西，都是 L0 拿不到的：
+1. 确认"删字段 + 重启"这条路在你这台机器上走得通；
+2. 练熟"必须先彻底退出浏览器"这个最容易翻车的动作；
+3. `preflight` 会顺便告诉你这个 Profile 的同步状态提示长什么样。
+
+### L2 / L3 的前提
+
+- **先把整个 Profile 目录复制一份**（`User Data\Default` 整个文件夹，不是只 copy `Bookmarks`）。这比 `bm.py backup` 更彻底，连 `Preferences` 一起保住；几十 MB 到几百 MB 的成本，换的是"最坏情况直接把目录盖回去"。
+- **保持浏览器原本的同步状态**，不要为了保险去开关同步——开关本身就会引发数据变动，得不偿失。
+- L3 之后别急着关浏览器等着同步：先肉眼核一遍，确认无误再让它同步上去。**一旦同步上线，误删就传播了，那时只能靠底牌 `restore`。**
+
+## 8. 变更日志
 
 - 2026-09-08 v1.1.0：SKILL 线性流程→带循环版；新增 `bm.py` 7 子命令并在合成靶子端到端跑通；加 `.gitignore` 隔离真实快照；建 `_test/chrome-default/` 只读测试目录。
 - 2026-09-08 v1.1.1：建 `_test/README.md`，定"验证靶场常驻勿删 + finalize 测试期只打副本"铁律；补本节分工台账。
@@ -124,3 +171,8 @@
   - **`finalize` 补目标闸门**：目标存在却解析不出 `roots`（多半是 `--target` 指到 `Preferences` 之类的文件）时拒绝覆盖，确要强行才 `--force`。补上新闸门后它是唯一会在武力之外防住"盖错文件"的一环。
   - **`verify --before` 补变更分类**：与 `diff` 同口径输出删/增/移动/改名/副本减少，避免"总数没变但组成变了"看不出来。
   - **新增 CI** `.github/workflows/test.yml`：Windows/macOS/Linux × Python 3.9/3.11 跑同一套测试 + 样例端到端冒烟，部分弥补"mac/linux 的 detect 分支无法在本机实测"。
+- 2026-09-08 v1.7.0：**把"脚本管不了的浏览器行为"显式化**—— 此前一直担心的那件事，现在会在体检时被点破，并有了一条零风险的试水路线。
+  - `preflight` 新增**云端同步感知**：检测 `Sync Data/` 目录与 `Preferences` 里的 `sync`/`account_info`/`signin`，有迹象就明确输出「**云端不是备份，是复制品**：误删会同步传播到所有设备」；没迹象就如实说"未发现"（**不谎称没开同步**），并建议动手前把整个 Profile 目录复制一份。这是提示不构成 NO-GO。
+  - SKILL Pitfalls 补两条硬认知：「云端不是备份」与「**不要靠开关同步求安全**」——开关同步本身会引发数据变动，风险大于收益。
+  - 新增 **第 7 节「真实场景验收阶梯」**：L0 合成样例 → **L1 用 `--user-data-dir` 起一次性 Profile 完整跑一遍含重启（这是第一次真正让浏览器参与，代价为零，能回答"浏览器会不会认账"）** → L2 真实 Profile 只读动作 → L3 完整整理；并写明 L2/L3 的前提是整 Profile 目录副本。README 与 SKILL 均已挂链。
+  - 测试从 28 项增到 **32 项**：新增 `TestPreflightSyncAwareness`（有迹象能识别、干净 Profile 不误报、有同步也不阻塞 GO）。

@@ -37,7 +37,7 @@ detect 定位 → preflight 体检(GO/NO-GO) → backup 底牌 → show 读准�
 | 命令 | 作用 |
 |---|---|
 | `detect` | 按 OS 环境变量自动定位各浏览器 Profile 的 Bookmarks（**根路径不写死**，跨 Win/mac/Linux） |
-| `preflight` | 只读体检：存在/可读写/JSON 合法/浏览器是否在跑 → 给 **GO/NO-GO** |
+| `preflight` | 只读体检：存在/可读写/JSON 合法/浏览器是否在跑/**是否开着云端同步** → 给 **GO/NO-GO** |
 | `backup` | 改前时间戳底牌 + sha256 校验 + 打印**可直接粘贴运行**的还原命令（绝对路径） |
 | `show` | 打印真实结构（目录树/数量/重复 id/重复 URL/checksum）；`--depth N` 只看 N 层、`--stats` 只看体检。重复 URL 会**标出同目录还是跨目录** |
 | `plan` | 内存里按 `--sort/--dedup` 重排到候选文件，**绝不碰原文件** |
@@ -65,6 +65,8 @@ detect 定位 → preflight 体检(GO/NO-GO) → backup 底牌 → show 读准�
 3. **`backup` 会当场打印一行 `restore_cmd`**（绝对路径）。这行命令在你看到它的那一刻就生效了——先把它复制到记事本存好，再继续往下走。
 
 一句话：`restore` 的语义是**回退到底牌那一刻**，不是"只撤销最后一步"。开了浏览器同步时，底牌拍摄之后由其他设备同步来的书签也会被一并退回（详见 `SKILL.md` 的 Pitfalls），所以尽量缩短 `backup → finalize` 的间隔。
+
+> ⚠ **云端不是备份，是复制品。** Chrome 书签同步是合并，本地的删除会跟着传播到所有设备——`preflight` 会在体检时点出这一点。唯一的保险始终是磁盘上那份底牌。详见 [阶梯式验收](MAINTENANCE.md#7-真实场景验收阶梯第一次动真-profile-之前)。
 
 ## 快速上手
 

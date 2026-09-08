@@ -1,6 +1,6 @@
 # chrome-bookmarks-organize
 
-> 直接编辑 Chrome/Edge 的 Bookmarks JSON 文件，让 AI Agent 帮你整理浏览器书签——**完全绕开"导出 HTML → 导入"的重复追加问题**。
+> **AI 整理浏览器书签栏 / 收藏夹**（Chrome、Edge）：书签太乱？让 AI 按内容自动归类、重排目录、改名、去重、排序、清理失效链接——直接编辑 Chrome/Edge 的 Bookmarks JSON 文件，**完全绕开"导出 HTML → 导入"的重复追加问题**。
 > 一句话定位：**一段提示词打底，一份脚本保底——默认用脚本跑。**
 
 正式整理书签，**默认 clone 本仓库走 `scripts/bm.py`（技能 + 脚本）**：体检 GO/NO-GO、自动备份、HTML 预览、原子写回、一键还原全部锁在代码里。不想 clone 时有两条轻路径——把 [`PROMPT.md`](PROMPT.md) 复制给任意 AI（一段话、无闸门，只适合一次性/先体验/分享），或只加载 [`SKILL.md`](SKILL.md) 走「仅提示词」（流程不变，闸门由 AI 人肉守）。**判定铁律：有脚本必用脚本，禁止手改 JSON。**

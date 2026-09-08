@@ -34,6 +34,8 @@
 - `SKILL.md` —— skill 化的完整流程与纪律（先看结构 → 先提方案 → 拍板才写 → 复验 → 可还原；无脚本时的降级执行层）；
 - `scripts/bm.py` —— **默认执行层**：把纪律锁进可验证的闸门（体检、自动备份、原子写回、一键还原）。
 
+![三份交付物 · 从轻到全](./docs/deliverables.svg)
+
 ## 使用方式（默认：技能 + 脚本）
 
 三条路跑的是**同一条 0→7 流程**（定位 → 备份 → 读结构 →〔循环改方案〕→ 拍板写回 → 校验 → 重启验收），区别只在闸门由谁守：
@@ -56,6 +58,8 @@ detect 定位 → preflight 体检(GO/NO-GO) → backup 底牌 → show 读准�
 ```
 
 只有 `finalize` 一步会真正改文件，其余都在内存/候选文件里折腾。
+
+![0→7 带循环主流程：只有 finalize 真正写回，不满意走 restore 回到底牌](./docs/workflow.svg)
 
 ## 工具箱 `scripts/bm.py`（10 个子命令）
 
@@ -137,6 +141,8 @@ python scripts/test/run_tests.py     # 54 项，零第三方依赖，约 1 秒
 - `PROMPT.md` — **零安装轻路径**：一段可直接复制给任意 AI 的纯文本提示词（`SKILL.md` 流程的压缩版，**无闸门**）。不 clone、一次性、想先体验或分享时用它。
 - `SKILL.md` — 给 AI 看的操作规范（默认脚本 + 无脚本降级 + 流程 + Pitfalls + 验证）。可单独加载当提示词，不必下载整仓。
 - `scripts/bm.py` — 上述工具箱（单文件、零第三方依赖，10 个子命令）。
+- `scripts/visualization/` — 架构/流程示意图的**生成脚本**（`generate_workflow.py`、`generate_deliverables.py`，零第三方依赖）。图上文案有变时，改脚本后重跑即可再生成，不要手改 SVG。
+- `docs/` — 示意图成品（`workflow.svg`：0→7 带循环主流程；`deliverables.svg`：三份交付物从轻到全），由 `scripts/visualization/` 生成并入库。
 - `scripts/test/sample/` — **入库**的通用站点演示样例：真实公开网站合成的 before（乱 40 条）/ after（归好 38 条）一对 + 生成脚本，零隐私、`clone` 后立刻有靶子可练。
 - `scripts/test/run_tests.py` — 零依赖回归测试（54 项），改完 `bm.py` 请跑它。
 - `scripts/test/` — **不入库**的真实书签快照（裁剪过的 `Bookmarks.before`/`after`，含隐私，已被 `.gitignore` 屏蔽），本地验证脚本手感用。

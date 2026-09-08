@@ -160,6 +160,10 @@ python scripts/bm.py verify    --file "<Bookmarks>" --before "<底牌>"
 
 ## 8. 变更日志
 
+- 2026-09-08 v1.14.0：**README 与可视化资产增量更新——新增两张随仓库生成的 SVG 示意图及其生成脚本**。
+  - 新增 `docs/workflow.svg`（0→7 带循环主流程：准备段只读 → 循环区不动真身 → 唯一写回 finalize → 校验验收 → restore 回底牌）与 `docs/deliverables.svg`（三份交付物从轻到全 + 默认路径判定），README 相应小节挂图（相对路径 `./docs/*.svg`），未删改任何既有正文/ASCII 对照。
+  - 新增可复用生成脚本 `scripts/visualization/generate_workflow.py` 与 `generate_deliverables.py`（零第三方依赖，含用途/运行方式/输出路径注释）：图上文案随功能演化后，改脚本重跑即可再生成，禁止手改 SVG。
+  - 版本同步：SKILL frontmatter 1.13.0 → 1.14.0；README「仓库结构」补 `docs/` 与 `scripts/visualization/` 两行；行为零变化，54 项回归不增删。
 - 2026-09-08 v1.13.0：**边界加固一轮——修掉 3 处"脏输入会把脚本搞崩"的洞，回归 48 → 54 项**。
   - 🔴 **修 bug：超大 `date_added` 使展示崩栈**。`chrome_ts_to_date` 只做了 `int()` 转换，10^30 微秒这类异常值在构造 `datetime + timedelta` 时抛 `OverflowError`，`show`/`preview` 会跟着报"未预期错误"（而它只是**显示**用的函数）。现在溢出返回 `?`，展示层永不因时间戳崩。
   - 🔴 **修 bug：`preview` 生成的 HTML 不转义引号**。URL/名称里出现 `'` 或 `"` 时，`href='…'` 结构会被截断，甚至能把伪属性"注入"进本地 HTML。`esc` 改为标准 `html.escape(quote=True)`，属性与文本统一转义。

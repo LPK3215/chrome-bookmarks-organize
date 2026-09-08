@@ -437,6 +437,117 @@ class TestPreflightSyncAwareness(unittest.TestCase):
         self.assertIn("GO", out)   # 提示归提示，不构成 NO-GO
 
 
+class TestProfileOccupancy(unittest.TestCase):
+    """进程名只能说"某处有 Chrome 在跑"；Profile 目录里的 SingletonLock 才说明"用的是不是这一个"。"""
+
+    def setUp(self):
+        self.dir = tempfile.TemporaryDirectory()
+        self.prof = os.path.join(self.dir.name, "Default")
+        os.makedirs(self.prof)
+        write(os.path.join(self.prof, "Preferences"), {"sync": {"x": 1}})   # Profile 指纹
+        self.target = write(os.path.join(self.prof, "Bookmarks"),
+                            bookmarks([node("A", "https://a.test/", 2024, 1, 1, "1")]))
+        self.cand = write(os.path.join(self.dir.name, "cand"), bookmarks([]))
+
+    def tearDown(self):
+        self.dir.cleanup()
+
+    def _lock(self):
+        open(os.path.join(self.prof, "SingletonLock"), "w").close()
+
+    def test_finalize_refuses_locked_profile(self):
+        self._lock()
+        with NoBrowser([]):   # 即使进程表里没有浏览器，也要拦得住
+            msg = run(["finalize", "--from", self.cand, "--target", self.target])
+        self.assertIn("Profile 正在被占用", msg)
+        self.assertEqual(bm.count_urls(bm.load(self.target)), 1)  # 真身没动
+
+    def test_finalize_force_still_works_when_lock_is_stale(self):
+        self._lock()
+        with NoBrowser([]):
+            msg = run(["finalize", "--from", self.cand, "--target", self.target, "--force"])
+        self.assertIsNone(msg)   # --force 放行，用于崩溃残留的旧锁
+
+    def test_preflight_nogo_on_locked_profile(self):
+        self._lock()
+        buf = io.StringIO()
+        code = None
+        with NoBrowser([]), redirect_stdout(buf):
+            try:
+                bm.main(["preflight", "--file", self.target])
+            except SystemExit as e:
+                code = e.code
+        self.assertEqual(code, 2)          # NO-GO 的约定退出码
+        self.assertIn("NO-GO", buf.getvalue())
+        self.assertIn("占用", buf.getvalue())
+
+    def test_preview_default_lands_outside_profile(self):
+        # 同时回归「不带 --base 的 preview」：diff_html 曾因缺初值而 UnboundLocalError
+        cwd = os.getcwd()
+        os.chdir(self.dir.name)
+        try:
+            with NoBrowser([]), redirect_stdout(io.StringIO()) as out:
+                bm.main(["preview", "--file", self.target])
+            self.assertNotIn("未预期错误", out.getvalue())
+        finally:
+            os.chdir(cwd)
+        self.assertTrue(os.path.isfile(os.path.join(self.dir.name, "preview.html")))
+        self.assertFalse(os.path.isfile(os.path.join(self.prof, "Bookmarks.preview.html")))
+
+    def test_plan_warns_when_candidate_lands_in_profile(self):
+        buf = io.StringIO()
+        with NoBrowser([]), redirect_stdout(buf):
+            bm.main(["plan", "--file", self.target,
+                     "--out", os.path.join(self.prof, "cand"), "--sort"])
+        self.assertIn("Profile 目录", buf.getvalue())
+
+
+class TestMinimumArgumentPaths(unittest.TestCase):
+    """每个命令的「最省参数」都必须能跑到底。
+
+    起因：preview 不带 `--base` 时 `diff_html` 缺初值 → UnboundLocalError，
+    而且藏了两个版本才被发现（因为手工验证时总带着 --base）。
+    这一类问题只有靠"把最小参数组合也跑一遍"才能钉住。
+    """
+
+    def setUp(self):
+        self.dir = tempfile.TemporaryDirectory()
+        self.src = write(os.path.join(self.dir.name, "Bookmarks"),
+                         bookmarks([node("A", "https://a.test/", 2024, 1, 1, "1")]))
+
+    def tearDown(self):
+        self.dir.cleanup()
+
+    def _must_not_crash(self, argv):
+        buf = io.StringIO()
+        with NoBrowser([]), redirect_stdout(buf):
+            bm.main(argv)
+        out = buf.getvalue()
+        self.assertNotIn("未预期错误", out)
+        self.assertNotIn("Traceback", out)
+        return out
+
+    def test_plan_without_rules(self):
+        self._must_not_crash(["plan", "--file", self.src, "--out",
+                              os.path.join(self.dir.name, "c1")])
+
+    def test_verify_without_before(self):
+        self._must_not_crash(["verify", "--file", self.src])
+
+    def test_show_without_switches(self):
+        self._must_not_crash(["show", "--file", self.src])
+
+    def test_preview_without_base(self):
+        out = self._must_not_crash(["preview", "--file", self.src,
+                                    "--out", os.path.join(self.dir.name, "p.html")])
+        self.assertIn("未比对差异", out)
+
+    def test_backup_defaults_to_same_dir(self):
+        self._must_not_crash(["backup", "--file", self.src])
+        self.assertTrue(any(f.startswith("Bookmarks.backup-") for f in os.listdir(self.dir.name)))
+        self.assertTrue(os.path.isfile(os.path.join(self.dir.name, "_backup_manifest.txt")))
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
 

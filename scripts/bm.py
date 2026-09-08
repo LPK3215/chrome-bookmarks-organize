@@ -389,8 +389,8 @@ def cmd_detect(args):
 
 
 # --------------------------- plan (非破坏 · 循环区) ---------------------------
-def _safety_gate(force, action):
-    """统一的安全闸：浏览器在跑就拒绝写类操作。返回是否继续。"""
+def _safety_gate(force, action, target=None):
+    """统一的安全闸：浏览器在跑 / 目标 Profile 被占用 → 拒绝写类操作。"""
     if force:
         return True
     running, ok = _browser_processes_running()
@@ -398,6 +398,12 @@ def _safety_gate(force, action):
         sys.exit(f"[{action}] ✗ 检测到浏览器进程在跑：{', '.join(running)}。"
                  f"运行时书签缓存在内存里，退出时旧数据会覆盖本次写入。"
                  f"请完全退出浏览器（含托盘后台）后重试；确认已退可加 --force。")
+    if target:
+        marks = profile_in_use_marks(target)
+        if marks:
+            sys.exit(f"[{action}] ✗ 目标 Profile 正在被占用（{', '.join(marks)}）："
+                     f"浏览器很可能正用着它，写入会被内存里的数据覆盖。"
+                     f"请完全退出浏览器后重试；若确认是崩溃残留的旧锁，加 --force 放行。")
     if not ok:
         print(f"[{action}] ⚠ 无法探测浏览器进程（tasklist/pgrep 不可用），请自行确保已完全退出浏览器。")
     return True
@@ -481,6 +487,8 @@ def cmd_plan(args):
     print(f"[plan] 规则: sort={args.sort} dedup={args.dedup}")
     print(f"[plan] url {before} -> {count_urls(data)}  (去重删除 {removed} 条)")
     print(f"[plan] 候选写入 {args.out} —— 原文件 {args.file} 未动。请 preview 肉眼核对后再 finalize。")
+    if looks_like_profile_dir(os.path.dirname(os.path.abspath(args.out))):
+        print(f"[plan] ⚠ 候选落在浏览器 Profile 目录里，建议换到临时目录，避免污染 Profile")
 
 
 # --------------------------- preview (非破坏 · 循环区) ---------------------------
@@ -533,7 +541,11 @@ def diff_report(base_node, cand_node):
 def cmd_preview(args):
     """把书签渲染成本地 HTML（真·嵌套树，层级清晰）；带 --base 时附增删差异。"""
     data = load(args.file)
-    out = args.out or (args.file + ".preview.html")
+    # 默认落在「当前工作目录」而不是书签文件旁边：后者通常是浏览器 Profile 目录，
+    # 往那儿写预览/候选等于往别人的地盘丢垃圾。
+    out = args.out or os.path.join(os.getcwd(), "preview.html")
+    if looks_like_profile_dir(os.path.dirname(os.path.abspath(out))):
+        print(f"[preview] ⚠ 输出落在浏览器 Profile 目录里（{out}），建议用 --out 指到别处")
 
     def esc(s):
         return (s or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
@@ -558,7 +570,7 @@ def cmd_preview(args):
                         f"<span class='cnt'> ({rc(root)})</span></span></summary><ul>{render(root)}</ul></details></li>")
     tree = "<ul class='tree'>" + "".join(body) + "</ul>"
 
-    diff_summary = ""
+    diff_summary, diff_html = "", ""   # 不带 --base 时这两项都要有初值
     if args.base:
         base = load(args.base)
         rep = diff_report(base, data)
@@ -626,7 +638,7 @@ a.u:hover{{text-decoration:underline}}
 # --------------------------- finalize (唯一动真身) ---------------------------
 def cmd_finalize(args):
     """把候选 --from 安装到 --target：删 checksum + 处理陈旧 .bak，然后原子写回。"""
-    _safety_gate(args.force, "finalize")  # 安全闸①：浏览器在跑就拒绝
+    _safety_gate(args.force, "finalize", target=args.target)  # 安全闸①：浏览器在跑 / Profile 被占用就拒绝
 
     data = load(args.file_from)
     if not isinstance(data, dict) or not isinstance(data.get("roots"), dict) \
@@ -673,6 +685,10 @@ def cmd_finalize(args):
                  f"        常见原因：浏览器没退干净占用文件 / 文件被设为只读 / 需要更高权限。"
                  f"（真身未被破坏，自动兜底件已生成）")
     print(f"[finalize] 已写回 {args.target}（url {count_urls(data)} 条）| checksum {'已删除' if had_ckpt else '本就无'}")
+    if "sync_metadata" in data:
+        print("[finalize] 注意：文件含 sync_metadata（Chrome 的同步进度标记），本工具原样保留。"
+              "重启后请留意改动有没有同步到其他设备——那属于浏览器侧行为；"
+              "若结果不如预期，restore 底牌仍然有效。")
 
 
 # --------------------------- verify ---------------------------
@@ -727,7 +743,7 @@ def cmd_restore(args):
     开了浏览器同步时，底牌拍摄之后由其他设备同步来的书签会被一并退回（已在 SKILL Pitfalls 写明）。"""
     if not os.path.isfile(args.backup):
         sys.exit(f"[restore] 底牌不存在: {args.backup}")
-    _safety_gate(args.force, "restore")  # 与 finalize 同等级：浏览器在跑就拒绝
+    _safety_gate(args.force, "restore", target=args.target)
     _prescript_snapshot(args.target, "restore", "prerestore")  # 还原前也兜一份当前状态
 
     shutil.copy2(args.backup, args.target)
@@ -739,6 +755,27 @@ def cmd_restore(args):
 
 
 # --------------------------- preflight (只读·GO/NO-GO) ---------------------------
+PROFILE_LOCK_FILES = ("SingletonLock", "SingletonCookie", "SingletonSocket")
+
+
+def profile_in_use_marks(bookmarks_path):
+    """返回 Profile 目录下仍存在的占用锁文件名（空列表=没占用迹象）。
+
+    为什么这比"看进程名"更强：进程名只能说明"系统里某处有个 Chrome 在跑"；
+    而 `SingletonLock` 是 Chrome 启动后才在该 Profile 目录里创建、干净退出时删除的，
+    它能直接回答关键问题——**正在被用的是不是这一个新 Profile**。
+    多用户/多 Profile 机器上，这正好补上进程名检测最容易误判的那一格。
+    （崩溃残留的旧锁会造成误报，此时用 --force 放行，并先自己确认浏览器已退出。）
+    """
+    prof = os.path.dirname(os.path.abspath(bookmarks_path))
+    return [n for n in PROFILE_LOCK_FILES if os.path.exists(os.path.join(prof, n))]
+
+
+def looks_like_profile_dir(path):
+    """目录里有没有浏览器 Profile 的指纹文件（用来提醒别把产物写进 Profile）。"""
+    return os.path.isfile(os.path.join(path or "", "Preferences"))
+
+
 def sync_signals(bookmarks_path):
     """尽力判断目标 Profile 是否开着云端同步，返回「依据」列表（可能为空）。
 
@@ -808,6 +845,13 @@ def cmd_preflight(args):
         print("    → 因此：改完先重启核对，确认无误再让它同步；一旦同步上线就没有回头键，只能 restore 底牌。")
     else:
         print("  · 未发现同步迹象（不代表一定没开，请以浏览器里显示的同步状态为准）")
+    marks = profile_in_use_marks(f)
+    if marks:
+        problems.append("目标 Profile 被占用")
+        print(f"  ✗ Profile 占用迹象：{', '.join(marks)} —— 浏览器很可能正用着它（比进程名更准）")
+    else:
+        print("  ✓ 未见 Profile 占用锁（SingletonLock 等）")
+
     print(f"  · 建议：动手前把整个 Profile 目录复制一份（{os.path.dirname(os.path.abspath(f))}）——"
           "这比单文件的 bm.py backup 更彻底，连 Preferences 一起保下来。")
 
@@ -877,7 +921,7 @@ def build_parser():
 
     pv = sub.add_parser("preview", help="渲染成本地 HTML 肉眼核对（循环区）")
     pv.add_argument("--file", required=True)
-    pv.add_argument("--out", help="输出的 .html，默认 <file>.preview.html")
+    pv.add_argument("--out", help="输出的 .html，默认当前目录的 preview.html（不写进 Profile 目录）")
     pv.add_argument("--base", help="原文件，用于高亮增删差异")
     pv.set_defaults(func=cmd_preview)
 

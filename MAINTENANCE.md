@@ -29,13 +29,13 @@
 | 子命令 | 职责 | 已核验内容 | 最近核验 | 待办/存疑 |
 |---|---|---|---|---|
 | detect | 按 OS 环境变量自动定位 Bookmarks | 本机重探到 Chrome Default/Profile 1、Edge Default；mtime 排序、"疑似在用"标记、`Local State` 显示名「LPK」均对；`--browser edge` 过滤有效 | 2026-09-08 | 已扩 Chromium/Brave/Vivaldi/Opera 根（**mac/linux 未在本机验**）；"整块 AppData 挪别的盘"仍需 `--root` |
-| preflight | 只读体检 → GO/NO-GO | Chrome 开着时正确判 NO-GO(浏览器在跑)、rc=2；chmod 444 时正确判"不可写"NO-GO；缺文件/损坏 JSON 均报 NO-GO | 2026-09-08 | 进程探测靠 tasklist/pgrep，探测不可用时只告警不阻断（交由 finalize） |
+| preflight | 只读体检 → GO/NO-GO | Chrome 开着判 NO-GO、rc=2；chmod 444 判"不可写"NO-GO；缺文件/损坏 JSON 报 NO-GO；**新增：Profile 占用锁（`SingletonLock` 等）存在即 NO-GO**，**提示 Profile 是否开着云端同步**（没迹象时如实说"未发现"，不谎称没开），并建议动手前先整个 Profile 目录复制一份 | 2026-09-08 | 进程探测不可用时只告警不阻断（交由 finalize 的占用锁兜第二道） |
 | backup | 底牌+manifest | 微秒时间戳防同秒碰撞 + 复制后 sha256 校验（不一致即丢弃并报错）；**`restore_cmd` 已改绝对路径**（解释器+脚本+底牌+目标），任何目录下可直接粘贴运行；源 JSON 损坏时仍会留下底牌与记录，不会被异常吞掉 | 2026-09-08 | 真实文件仅做只读快照，未跑写操作（符合预期） |
 | show | 读结构+体检 | 新增 `--depth N`（只打到第 N 层）/ `--stats`（只看体检）；>300 条自动提醒改用这两个开关；重复 URL **逐条标注「同目录→会被去重」还是「跨目录→保留」**，消除"AI 拿着全树重复表向用户承诺去重"的误判；重复 id 改用 Counter 一次扫出（原 O(n²) 写法已删）；缺 `roots` 给干净中文而非 KeyError | 2026-09-08 | 排序为 Unicode 码点序，非中文拼音序（需 locale/第三方库，暂搁） |
 | plan | 内存重排到候选 | sort+dedup 跑通，原文件 0 改动已证明；真实快照 3276→3275（并掉 1 条同目录重复） | 2026-09-08 | 仅 `--sort/--dedup`；改名/移动/新建目录尚未脚本化（暂靠 AI 改 JSON） |
-| preview | 本地HTML嵌套树预览 | 真·嵌套 `<ul>` 树；**目录可折叠（原生 `<details>`，无 JS）**；`--base` 差异区已与 `diff` 共用同一套分类（删/增/移动/改名/副本减少，按颜色区分） | 2026-09-08 | 折叠默认全展开；如需"默认收起深层"再加开关 |
+| preview | 本地HTML嵌套树预览 | 真·嵌套 `<ul>` 树；**目录可折叠（原生 `<details>`，无 JS）**；`--base` 差异区与 `diff` 共用同一套分类（删/增/移动/改名/副本减少，按颜色区分）；**默认输出改到当前目录**（原来写到书签文件旁＝浏览器 Profile 目录），落在 Profile 里会告警 | 2026-09-08 | 折叠默认全展开；**修复：不带 `--base` 时 `diff_html` 缺初值导致 UnboundLocalError（v1.5.0 起存在，被最小参数测试抓出）** |
 | diff | 两份书签增删对账 | **重写为「路径+名称+链接」的多重集比对**：能区分真删除/真新增/**移动**/改名/**副本减少**，并把 `(名称,链接)` 仍在对方的条目判为"副本减少"而非"删除"；新增路徑有助于发现"纯整理目录"这种过去会报"删0/增0"的场景 | 2026-09-08 | 改名+移动同时发生时，按"先配改名再配移动"的顺序处理，极端多重重名场景可能配对次序不理想（暂未发现误判） |
-| finalize | 唯一动真身 | Chrome 开着拒绝（rc=1）；`--force` 放行 + 自动 prescript 兜底 + 改名陈旧 .bak；**新增：写回前先验候选结构（缺 roots/三根之一即拒），并先验目标（目标存在却解析不出 roots 即拒，防 `--target` 指错盖到别的文件，需 `--force` 放行）**；**写回改为先落 `.tmp` 再 `os.replace` 的原子替换**，中途失败不再留下半个 JSON；安全闸与本表 restore 共用同一实现 | 2026-09-08 | 真实浏览器 Profile 仍未 finalize（测试期只打临时目录副本） |
+| finalize | 唯一动真身 | Chrome 开着拒绝（rc=1）；`--force` 放行 + 自动 prescript 兜底 + 改名陈旧 .bak；**新增：写回前先验候选结构（缺 roots/三根之一即拒），并先验目标（目标存在却解析不出 roots 即拒，防 `--target` 指错盖到别的文件，需 `--force` 放行）**；**安全闸加第二道防线——Profile 占用锁**（`SingletonLock`/`Cookie`/`Socket` 存在即拒，即使进程表里没有浏览器）**写回改为先落 `.tmp` 再 `os.replace` 的原子替换**，中途失败不再留下半个 JSON；安全闸与本表 restore 共用同一实现 | 2026-09-08 | 真实浏览器 Profile 仍未 finalize（测试期只打临时目录副本） |
 | verify | 校验+对账 | 合成+真实文件跑通；BOM 文件也能读；损坏 JSON 自身捕获报错；**`--before` 现在额外输出"变更分类"（删/增/移动/改名/副本减少）**，与 `diff` 同口径；`--before` 读不出时给告警而非崩 | 2026-09-08 | `--before` 依赖用户传对底牌路径；发现问题只报告不自动回滚 |
 | restore | 回退到底牌那一刻 | **补齐与 finalize 同级的安全闸**：浏览器在跑即拒（需 `--force`）+ 自动 `prerestore` 兜底当前状态；输出明确"回退到底牌拍摄时刻"及同步场景提醒 | 2026-09-08 | 还原后 `.bak.stale-*`/`.prescript-*` 不自动清理，是否纳入待定；同步窗口期内他端新增书签会被一并退回（已写进 SKILL Pitfalls） |
 
@@ -69,8 +69,11 @@
 | 超大全树刷屏 | `show --depth N` / `--stats` + >300 条自动提醒 | ✅ |
 | Windows 中文控制台乱码 | stdout + stderr 均 `reconfigure(utf-8)` | ✅ |
 | **`--target` 指错文件（把候选盖到 Preferences）** | `finalize` 校验目标能解析出 `roots`，否则拒绝，确要覆盖才 `--force` | ✅（有单测） |
+| **多 Profile 机器：跑着的浏览器用的不是目标 Profile** | 进程名只说明"某处有 Chrome 在跑" → 新增 **Profile 占用锁检测**（`SingletonLock`/`Cookie`/`Socket`），直击"是不是这一个" | ✅（有单测：即使进程表干净也拦得住） |
+| **预览/候选中产物写进浏览器 Profile 目录** | `preview` 默认落到当前工作目录；`plan`/`preview` 检测到输出落在含 `Preferences` 的目录就告警 | ✅ |
+| **命令省参数调用却因未初始化变量崩溃** | `TestMinimumArgumentPaths` 把每个命令的最省参数组合都跑一遍 | ✅（已抓出 preview 的实际 bug） |
 | **目标 Profile 开着云端同步，误删会传播** | 脚本管不了浏览器的合并行为 → `preflight` 明确提示（并区分"未发现迹象"而非谎称没开）+ SKILL Pitfalls 写明"云端是复制品不是备份" + 阶梯 L2/L3 要求先做**整个 Profile 目录副本** | 提示已实现；行为保证只能靠阶梯验证 |
-| **护栏被后来的改动悄悄破坏** | `scripts/test/run_tests.py` 28 项回归 + CI 三平台；已做变异验证（把去重比较符改反→测试立刻变红） | ✅ |
+| **护栏被后来的改动悄悄破坏** | `scripts/test/run_tests.py` 42 项回归 + CI 三平台；已做变异验证（把去重比较符改反→测试立刻变红）；最小参数组合也纳入回归 | ✅ |
 | **写回写到一半失败（磁盘满/被占用）** | 先写 `.tmp` 再 `os.replace` 原子替换，真身永不为半截 JSON | ✅（代码就位） |
 | **候选文件本身是垃圾/结构非法** | `finalize` 先验证 `roots` 与三个根之一，不合法直接拒绝写回 | ✅ |
 | **还原时浏览器在跑** | `restore` 与 `finalize` 共用 `_safety_gate`，同样拒绝并提供 `--force` | ✅（Chrome 开着→拒） |
@@ -84,7 +87,7 @@
 
 | 位置 | 性质 | 是否入库 | 用途 |
 |---|---|---|---|
-| `test/run_tests.py` | 零依赖回归测试（unittest，28 项，~1 秒） | ✅ 入库 | 锁安全不变量；改完 `bm.py` 必跑 |
+| `test/run_tests.py` | 零依赖回归测试（unittest，42 项，~1 秒） | ✅ 入库 | 锁安全不变量；改完 `bm.py` 必跑 |
 | `test/sample/` | **纯虚构**合成样例（18 条）+ `make_sample.py` | ✅ 入库 | clone 后立刻有靶子；兼作回归验收基准 |
 | `test/Bookmarks.*` | 真实书签裁剪快照（~99 条） | ❌ 被 `.gitignore` 屏蔽 | 本地验证真实结构手感 |
 
@@ -176,3 +179,8 @@ python scripts/bm.py verify    --file "<Bookmarks>" --before "<底牌>"
   - SKILL Pitfalls 补两条硬认知：「云端不是备份」与「**不要靠开关同步求安全**」——开关同步本身会引发数据变动，风险大于收益。
   - 新增 **第 7 节「真实场景验收阶梯」**：L0 合成样例 → **L1 用 `--user-data-dir` 起一次性 Profile 完整跑一遍含重启（这是第一次真正让浏览器参与，代价为零，能回答"浏览器会不会认账"）** → L2 真实 Profile 只读动作 → L3 完整整理；并写明 L2/L3 的前提是整 Profile 目录副本。README 与 SKILL 均已挂链。
   - 测试从 28 项增到 **32 项**：新增 `TestPreflightSyncAwareness`（有迹象能识别、干净 Profile 不误报、有同步也不阻塞 GO）。
+- 2026-09-08 v1.8.0：**针对"就要上真实浏览器演示"做的最后三层加固**，其中一层是应急救下的线上 bug。
+  - **🔴 修 bug：`preview` 不带 `--base` 时必崩**（`diff_html` 缺初值 → UnboundLocalError）。自 v1.5.0 起存在，**藏了两个版本**——因为手工验证时总带着 `--base`，而它在 `main()` 里被包装成"✗ 未预期错误"。这正是第 3 步循环里最常见的调用方式，会在真实演示的第一轮就炸出来。
+  - **安全闸加第二道防线：Profile 占用锁**。原来只看进程名，只能回答"某处有 Chrome 在跑"；新增的 `SingletonLock` / `SingletonCookie` / `SingletonSocket` 检测直接回答"**跑着的是不是这一个 Profile**"——多 Profile 机器上这是最容易误判的一格。`finalize`/`restore`/`preflight` 均生效，测试证明**即使进程表干净也拦得住**；崩溃残留旧锁可用 `--force` 放行。
+  - **产物不再污染 Profile 目录**：`preview` 默认输出从"书签文件旁边"（＝浏览器 Profile）改为当前工作目录；`plan`/`preview` 检测到输出落在含 `Preferences` 的目录会告警。`finalize` 在文件含 `sync_metadata` 时提示留意同步是否传播（浏览器侧行为，脚本管不了但要点破）。
+  - **测试 32 → 42 项**：新增 `TestProfileOccupancy`（三高一低：占用拦截 / `--force` 放行 / preflight NO-GO / 产物不落 Profile）与 **`TestMinimumArgumentPaths`**（每个命令的最省参数组合都跑一遍，专门钉住"某个分支的变量忘了初始化"这类事故——上面的 bug 就是它抓出来的）。

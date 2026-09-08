@@ -1,7 +1,7 @@
 ---
 name: chrome-bookmarks-organize
 description: 直接编辑 Chrome/Edge 的 Bookmarks JSON 文件，让 AI 整理浏览器书签（重排目录/改名/去重/排序），完全绕开"导出HTML→导入"的重复追加问题。用户要求整理收藏夹、批量修改书签结构时使用。
-version: 1.7.0
+version: 1.8.0
 ---
 
 # Chrome 书签直改整理
@@ -34,7 +34,7 @@ version: 1.7.0
 
 0. **定位 + 体检（GO/NO-GO 闸门）**
    - 定位：`python scripts/bm.py detect`（按 OS 环境变量扫出候选，标"疑似在用"）→ 与用户确认整理哪一个，得到 `<Bookmarks>`。
-   - 体检：`python scripts/bm.py preflight --file "<Bookmarks>"`（**只读**）→ 检查文件存在/可读可写/JSON 合法/是否有 `.bak`/**浏览器是否在跑**，并**提示该 Profile 是否开着云端同步**，末行给 `GO ✅` 或 `NO-GO`。
+   - 体检：`python scripts/bm.py preflight --file "<Bookmarks>"`（**只读**）→ 检查文件存在/可读可写/JSON 合法/是否有 `.bak`、**是否有浏览器进程**、**目标 Profile 是否被占用**（比进程名更准，见 Pitfalls），并**提示该 Profile 是否开着云端同步**，末行给 `GO ✅` 或 `NO-GO`。
    - 若体检提示开着同步，**必须原话告知用户**：本次改动会同步到账号，**误删也会跟着传播到所有设备；云端是复制品不是备份**，唯一的保险是第 1 步的底牌。
    - **NO-GO 不许往下走**。浏览器没退干净＝白改（退出时内存旧数据覆盖磁盘）；preflight 报"浏览器在跑"就让用户彻底退出（含托盘后台）再重跑。
 
@@ -102,7 +102,7 @@ version: 1.7.0
 
 - **先判定用法**：有 `bm.py` 走脚本步骤；没有就走「仅提示词时怎么做」。不要混用。
 - **第 3 步是循环，不是直线**：AI 不得按字面顺序一路冲到写回。没拿到用户明确的"就这版"，绝不执行第 4 步（脚本的 `finalize` / 仅提示词的写回）。
-- 浏览器没退干净 = 白改（退出时被内存旧数据覆盖，最常见失败原因）。脚本模式由 `preflight`/`finalize` 自动拦截（检测到 chrome/edge 等在跑即拒绝；确已退出仍被拦才用 `--force`，平时别拿它绕闸）。**仅提示词模式没有进程探测**——必须问出口并等到肯定答复。
+- 浏览器没退干净 = 白改（退出时被内存旧数据覆盖，最常见失败原因）。脚本模式由 `preflight`/`finalize` 自动拦截，两道防线互补：①**进程名**（检测到 chrome/edge 等在跑即拒）；②**Profile 占用锁**（`SingletonLock` / `SingletonCookie` / `SingletonSocket` 存在即拒）——后者能回答进程名答不了的问题："跑着的浏览器用的**是不是这一个 Profile**"。确已退出仍被拦才用 `--force`（旧锁可能是崩溃残留），平时别拿它绕闸。**仅提示词模式没有进程探测**——必须问出口并等到肯定答复。
 - **动手前先 `preflight`**：它给 GO/NO-GO；NO-GO（文件缺失/损坏/只读/浏览器在跑）一律先解决再往下，别硬跑 backup/finalize。
 - 目标文件**只读或被占用**时，`preflight` 会标"不可写"、`finalize` 写失败给一句人话并保留自动兜底件，不会把真身写坏。
 - **`finalize` 会先验候选、先验目标再写**：候选缺 `roots` 或三个根之一就拒绝；**目标解析不出 `roots` 也拒绝**（防止把候选盖到 `Preferences` 等别的文件上，需 `--force` 才放行）。写回走 `.tmp` + `os.replace`，中途失败不留半个文件。
@@ -125,4 +125,4 @@ version: 1.7.0
 - 脚本模式：第 5 步 `verify` 三项全绿，且 `--before` 对账差额＝预期去重数。仅提示词：硬约束第 7 条复验通过。
 - 用户重启 Chrome/Edge 后结构生效、链接可点。
 - 脚本模式改真实数据前，先在 `scripts/test/sample/`（入库的虚构样例，18 条）上把 `preflight→backup→show→plan→preview→finalize→verify→diff→restore` 整条跑一遍、确认手感再上；`sample/README.md` 里写了每步的预期输出。想用更接近真实的结构，再用本地那份含隐私的快照。仅提示词没有这份靶场，更要先备份、先问「退浏览器了吗」。
-- 改动 `bm.py` 后必须跑回归：`python scripts/test/run_tests.py`（28 项，零第三方依赖，~1 秒）。它锁住的是安全不变量——去重保留最新、跨目录不去重、两个安全闸、原子写回、结构闸门、路径感知对账。测试红了就是护栏松了，先修再往下走。
+- 改动 `bm.py` 后必须跑回归：`python scripts/test/run_tests.py`（42 项，零第三方依赖，~1 秒）。它锁住的是安全不变量——去重保留最新、跨目录不去重、两个安全闸、原子写回、结构闸门、路径感知对账。测试红了就是护栏松了，先修再往下走。

@@ -37,7 +37,7 @@ detect 定位 → preflight 体检(GO/NO-GO) → backup 底牌 → show 读准�
 | 命令 | 作用 |
 |---|---|
 | `detect` | 按 OS 环境变量自动定位各浏览器 Profile 的 Bookmarks（**根路径不写死**，跨 Win/mac/Linux） |
-| `preflight` | 只读体检：存在/可读写/JSON 合法/浏览器是否在跑/**是否开着云端同步** → 给 **GO/NO-GO** |
+| `preflight` | 只读体检：存在/可读写/JSON 合法/**浏览器进程**/**Profile 是否被占用锁**/**是否开着云端同步** → 给 **GO/NO-GO** |
 | `backup` | 改前时间戳底牌 + sha256 校验 + 打印**可直接粘贴运行**的还原命令（绝对路径） |
 | `show` | 打印真实结构（目录树/数量/重复 id/重复 URL/checksum）；`--depth N` 只看 N 层、`--stats` 只看体检。重复 URL 会**标出同目录还是跨目录** |
 | `plan` | 内存里按 `--sort/--dedup` 重排到候选文件，**绝不碰原文件** |
@@ -50,7 +50,7 @@ detect 定位 → preflight 体检(GO/NO-GO) → backup 底牌 → show 读准�
 ## 安全设计（为什么敢让它动你的真实数据）
 
 - **写操作一律先兜底**：`finalize` 会在写回前自动复制一份 `prescript`，`restore` 也会兜一份 `prerestore`——漏做 `backup` 也不至于裸奔。
-- **两个写操作同等级的安全闸**：`preflight`/`finalize`/`restore` 都用 tasklist/pgrep 检测浏览器进程，开了就拒绝，杜绝"写完被内存覆盖"。
+- **两个写操作同等级的安全闸**：`preflight`/`finalize`/`restore` 都有两道防线——①进程名检测（tasklist/pgrep）；②**Profile 占用锁**（`SingletonLock` 等存在即拒）。后者能回答进程名答不了的关键问题：**跑着的浏览器用的是不是这一个 Profile**，多 Profile 机器上尤其重要。
 - **写回是原子的**：先落 `.tmp` 再 `os.replace`，不会留下"半个 JSON"；候选结构非法（`roots` 缺失等）直接拒绝写回。
 - **预览先行**：任何写回前，先把结构渲染成本地 HTML（目录可折叠）让你肉眼核对；预览和浏览器看到的一致，才证明脚本可信。
 - **不自作主张删**：去重只在同目录内合并，跨目录同链接保留；`show` 会把每条重复标成"同目录（会去重）"还是"跨目录（不去重）"，不让你猜。
@@ -91,11 +91,15 @@ python scripts/bm.py restore   --backup "<底牌>" --target "<Bookmarks>"
 ## 回归测试（改动脚本后必跑）
 
 ```bash
-python scripts/test/run_tests.py     # 28 项，零第三方依赖，约 1 秒
+python scripts/test/run_tests.py     # 42 项，零第三方依赖，约 1 秒
 ```
 
 它锁的是**安全不变量**，不是覆盖率：去重是否保留最新、跨目录是否被误删、`plan` 有没有写过源文件、
-两个安全闸（finalize/restore）是否还拦得住、写回是否原子、结构闸门是否还生效、移动/改名/副本减少的分类对不对。
+两个安全闸（含 Profile 占用锁）是否还拦得住、写回是否原子、结构闸门是否还生效、移动/改名/副本减少的分类对不对，
+以及**每个命令最省参数的组合还能不能跑到底**。
+
+最后这条不是凑数的：`preview` 不带 `--base` 时曾因变量缺初值直接崩溃，藏了两个版本没人发现——
+因为手工验证时总带着 `--base`。现在 `TestMinimumArgumentPaths` 会把每种最小参数组合都跑一遍。
 
 这套断言做过变异验证：故意把"保留最新一条"改反，测试立刻变红——它是真的有约束力，不是摆设。
 `.github/workflows/test.yml` 会在 **Windows / macOS / Linux × Python 3.9 / 3.11** 上跑同一套。
@@ -105,7 +109,7 @@ python scripts/test/run_tests.py     # 28 项，零第三方依赖，约 1 秒
 - `SKILL.md` — 给 AI 看的操作规范（两种用法 + 流程 + Pitfalls + 验证）。可单独加载当提示词，不必下载整仓。
 - `scripts/bm.py` — 上述工具箱（单文件、零第三方依赖，10 个子命令）。
 - `scripts/test/sample/` — **入库**的合成样例：虚构的 before/after 两份数据 + 生成脚本，`clone` 后立刻有靶子可练。
-- `scripts/test/run_tests.py` — 零依赖回归测试（28 项），改完 `bm.py` 请跑它。
+- `scripts/test/run_tests.py` — 零依赖回归测试（42 项），改完 `bm.py` 请跑它。
 - `scripts/test/` — **不入库**的真实书签快照（裁剪过的 `Bookmarks.before`/`after`，含隐私，已被 `.gitignore` 屏蔽），本地验证脚本手感用。
 - `MAINTENANCE.md` — 长期维护文档：**AI 判断 vs 脚本执行**的分工合同、脚本质量台账、边界矩阵、变更日志。
 

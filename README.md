@@ -149,6 +149,7 @@ python scripts/test/run_tests.py     # 54 项，零第三方依赖，约 1 秒
 - `scripts/test/run_tests.py` — 零依赖回归测试（54 项），改完 `bm.py` 请跑它。
 - `scripts/test/` — **不入库**的真实书签快照（裁剪过的 `Bookmarks.before`/`after`，含隐私，已被 `.gitignore` 屏蔽），本地验证脚本手感用。
 - `MAINTENANCE.md` — 长期维护文档：**AI 判断 vs 脚本执行**的分工合同、脚本质量台账、边界矩阵、变更日志。
+- `PAGES-DEPLOY.md` — GitHub Pages 部署文档：经典模式 vs Actions 模式的区别、选型理由、操作命令，附一段可直接复制给 AI 的提示词。
 
 ## 使用前提（硬性）
 

@@ -1,7 +1,7 @@
 ---
 name: chrome-bookmarks-organize
 description: 直接编辑 Chrome/Edge 的 Bookmarks JSON 文件，让 AI 整理浏览器书签（重排目录/改名/去重/排序），完全绕开"导出HTML→导入"的重复追加问题。用户要求整理收藏夹、批量修改书签结构时使用。
-version: 1.5.0
+version: 1.6.0
 ---
 
 # Chrome 书签直改整理
@@ -54,7 +54,7 @@ version: 1.5.0
 
 4. **【唯一动真身 · 未获第 3 步"就这版"前禁止执行】**
    `python scripts/bm.py finalize --from "<候选>" --target "<Bookmarks>"`
-   → 先验候选结构（缺 `roots` / `bookmark_bar|other|synced` 一律拒绝），再删除顶层 `checksum`（改数据后校验和必失配，删掉 Chrome 会自动重建、不报错），把陈旧 `Bookmarks.bak` 改名 `.stale-*`（防加载时静默回滚），最后**原子写回**（先落 `.tmp` 再 `os.replace`，不会留下半个 JSON）。
+   → **两端都要先验**：候选缺 `roots` / `bookmark_bar|other|synced` 一律拒绝；目标若存在却**解析不出 `roots`**（多半是 `--target` 指到了 `Preferences` 之类的文件）也拒绝，确要覆盖才加 `--force`。再删除顶层 `checksum`（改数据后校验和必失配，删掉 Chrome 会自动重建、不报错），把陈旧 `Bookmarks.bak` 改名 `.stale-*`（防加载时静默回滚），最后**原子写回**（先落 `.tmp` 再 `os.replace`，不会留下半个 JSON）。
    → **内置双保险**：finalize 自己会再查一次浏览器进程，在跑就拒绝（除非 `--force`）；写回前自动把当前真身兜一份 `<target>.prescript-<时间>`，即使用户漏了第 1 步也能救；写失败（只读/被占用）给一句人话而非崩栈。
 
 5. **机器校验**
@@ -104,7 +104,8 @@ version: 1.5.0
 - 浏览器没退干净 = 白改（退出时被内存旧数据覆盖，最常见失败原因）。脚本模式由 `preflight`/`finalize` 自动拦截（检测到 chrome/edge 等在跑即拒绝；确已退出仍被拦才用 `--force`，平时别拿它绕闸）。**仅提示词模式没有进程探测**——必须问出口并等到肯定答复。
 - **动手前先 `preflight`**：它给 GO/NO-GO；NO-GO（文件缺失/损坏/只读/浏览器在跑）一律先解决再往下，别硬跑 backup/finalize。
 - 目标文件**只读或被占用**时，`preflight` 会标"不可写"、`finalize` 写失败给一句人话并保留自动兜底件，不会把真身写坏。
-- **`finalize` 会先验候选再写**：候选缺 `roots` 或三个根之一就拒绝，绝不会把一份非书签 JSON 盖到真身上。写回走 `.tmp` + `os.replace`，中途失败不留半个文件。
+- **`finalize` 会先验候选、先验目标再写**：候选缺 `roots` 或三个根之一就拒绝；**目标解析不出 `roots` 也拒绝**（防止把候选盖到 `Preferences` 等别的文件上，需 `--force` 才放行）。写回走 `.tmp` + `os.replace`，中途失败不留半个文件。
+- **`verify --before` 会同时给出"变更分类"**（删/增/移动/改名/副本减少），跟 `diff` 同口径。只看条数差额容易漏判"总数没变但组成变了"。
 - **`show` 报的重复 URL 是全树的，但 `plan --dedup` 只合并同目录的**。看到"跨目录"标注时，别向用户承诺会去重。
 - **`restore` 也有安全闸**：浏览器在跑会被拒绝（确已退出才 `--force`），写前还会兜一份 `prerestore`。它和 `finalize` 是同级危险操作，不要当成"安全的只读命令"。
 - **路径不写死**：靠 `detect` 从 OS 环境变量解析（跨 Win/mac/Linux、换用户名）；用户用 `--user-data-dir` 挪过位置就 `detect --root`，或任何命令直接传 `--file`。绝不把 `C:\Users\某名\...` 烙进脚本或文档。
@@ -121,3 +122,4 @@ version: 1.5.0
 - 脚本模式：第 5 步 `verify` 三项全绿，且 `--before` 对账差额＝预期去重数。仅提示词：硬约束第 7 条复验通过。
 - 用户重启 Chrome/Edge 后结构生效、链接可点。
 - 脚本模式改真实数据前，先在 `scripts/test/sample/`（入库的虚构样例，18 条）上把 `preflight→backup→show→plan→preview→finalize→verify→diff→restore` 整条跑一遍、确认手感再上；`sample/README.md` 里写了每步的预期输出。想用更接近真实的结构，再用本地那份含隐私的快照。仅提示词没有这份靶场，更要先备份、先问「退浏览器了吗」。
+- 改动 `bm.py` 后必须跑回归：`python scripts/test/run_tests.py`（28 项，零第三方依赖，~1 秒）。它锁住的是安全不变量——去重保留最新、跨目录不去重、两个安全闸、原子写回、结构闸门、路径感知对账。测试红了就是护栏松了，先修再往下走。

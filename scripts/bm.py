@@ -634,6 +634,17 @@ def cmd_finalize(args):
         sys.exit("[finalize] ✗ 候选文件结构非法（缺 roots / bookmark_bar|other|synced），拒绝写回目标。"
                  "请检查 --from 是否指向正常的书签 JSON。")
 
+    # 目标闸门：防止把候选盖到一个「根本不是书签」的文件上（--target 手误最常见）
+    if os.path.exists(args.target) and not args.force:
+        try:
+            looks_bookmark = isinstance(load(args.target).get("roots"), dict)
+        except Exception:
+            looks_bookmark = False
+        if not looks_bookmark:
+            sys.exit(f"[finalize] ✗ 目标文件不像书签文件（解析不出 roots）：{args.target}\n"
+                     f"        常见原因：--target 指到了别的文件（如 Preferences）/ 目标已损坏。\n"
+                     f"        请先核对路径并备份；确要强行覆盖再加 --force。")
+
     had_ckpt = "checksum" in data
     data.pop("checksum", None)  # 删字段 → Chrome 自动重建校验
 
@@ -697,9 +708,17 @@ def cmd_verify(args):
     print(f"[verify] url 总数: {count_urls(data)}  | 重复id: {sorted(dup_ids) if dup_ids else '无'}")
     print(f"[verify] 结构问题: {issues if issues else '无'}")
     if args.before:
-        b = count_urls(load(args.before))
-        a = count_urls(data)
+        try:
+            before = load(args.before)
+        except Exception as e:
+            print(f"[verify] ⚠ 无法读取 --before 文件做对账：{e}")
+            return
+        b, a = count_urls(before), count_urls(data)
         print(f"[verify] 对账 {args.before}: {b} -> {a}（差额 {b - a}）")
+        rep = diff_report(before, data)
+        print(f"[verify] 变更分类：删 {len(rep['removed'])} / 增 {len(rep['added'])} / "
+              f"移动 {len(rep['moved'])} / 改名 {len(rep['renamed'])} / "
+              f"副本减少 {len(rep['deduped'])}")
 
 
 # --------------------------- restore ---------------------------

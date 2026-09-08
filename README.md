@@ -43,8 +43,8 @@ detect 定位 → preflight 体检(GO/NO-GO) → backup 底牌 → show 读准�
 | `plan` | 内存里按 `--sort/--dedup` 重排到候选文件，**绝不碰原文件** |
 | `preview` | 渲染成**本地嵌套树 HTML**（`<details>` 可折叠、无 JS），双击肉眼核对；`--base` 附「删/增/移动/改名/副本减少」差异 |
 | `diff` | **路径感知**对账：除增/删 URL 外，还能识别**移动**（同名链接换目录）、改名、副本减少（删掉多份同名同链中的一份） |
-| `finalize` | **唯一动真身**：候选结构闸门 + 删 checksum + 改名陈旧 `.bak` + **原子写回**（先 .tmp 再 replace）；浏览器在跑拒绝（除非 `--force`），写前自动再兜一份 |
-| `verify` | JSON 合法性 + 结构合法 + id 唯一 + 数量对账 |
+| `finalize` | **唯一动真身**：先验候选与**目标**合法性（目标解析不出 `roots` 也拒，防误盖别的文件）+ 删 checksum + 改名陈旧 `.bak` + **原子写回**（先 .tmp 再 replace）；浏览器在跑拒绝（除非 `--force`），写前自动再兜一份 |
+| `verify` | JSON 合法性 + 结构合法 + id 唯一 + 数量对账；传 `--before` 时额外给出**变更分类**（删/增/移动/改名/副本减少），与 `diff` 同口径 |
 | `restore` | 回退到底牌那一刻；与 `finalize` 同级安全闸（浏览器在跑拒绝）并自动兜底当前状态 |
 
 ## 安全设计（为什么敢让它动你的真实数据）
@@ -86,11 +86,24 @@ python scripts/bm.py verify    --file "<Bookmarks>" --before "<底牌>"
 python scripts/bm.py restore   --backup "<底牌>" --target "<Bookmarks>"
 ```
 
+## 回归测试（改动脚本后必跑）
+
+```bash
+python scripts/test/run_tests.py     # 28 项，零第三方依赖，约 1 秒
+```
+
+它锁的是**安全不变量**，不是覆盖率：去重是否保留最新、跨目录是否被误删、`plan` 有没有写过源文件、
+两个安全闸（finalize/restore）是否还拦得住、写回是否原子、结构闸门是否还生效、移动/改名/副本减少的分类对不对。
+
+这套断言做过变异验证：故意把"保留最新一条"改反，测试立刻变红——它是真的有约束力，不是摆设。
+`.github/workflows/test.yml` 会在 **Windows / macOS / Linux × Python 3.9 / 3.11** 上跑同一套。
+
 ## 仓库结构
 
 - `SKILL.md` — 给 AI 看的操作规范（两种用法 + 流程 + Pitfalls + 验证）。可单独加载当提示词，不必下载整仓。
 - `scripts/bm.py` — 上述工具箱（单文件、零第三方依赖，10 个子命令）。
 - `scripts/test/sample/` — **入库**的合成样例：虚构的 before/after 两份数据 + 生成脚本，`clone` 后立刻有靶子可练。
+- `scripts/test/run_tests.py` — 零依赖回归测试（28 项），改完 `bm.py` 请跑它。
 - `scripts/test/` — **不入库**的真实书签快照（裁剪过的 `Bookmarks.before`/`after`，含隐私，已被 `.gitignore` 屏蔽），本地验证脚本手感用。
 - `MAINTENANCE.md` — 长期维护文档：**AI 判断 vs 脚本执行**的分工合同、脚本质量台账、边界矩阵、变更日志。
 

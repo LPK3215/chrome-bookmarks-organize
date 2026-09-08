@@ -160,6 +160,10 @@ python scripts/bm.py verify    --file "<Bookmarks>" --before "<底牌>"
 
 ## 8. 变更日志
 
+- 2026-09-08 v1.14.1：**GitHub Pages 在线部署——全景观览站上线，skill 源码不裸露**。
+  - 新增 `.github/workflows/pages.yml`：push main（或手动 dispatch）后自动把 `project_overview/` 整体作为**站点根**发布到 GitHub Pages（`configure-pages@v5` + `upload-pages-artifact@v3` + `deploy-pages@v4`），站点内仅含全景观览页，`SKILL.md`/`PROMPT.md`/`scripts/` 等源码不随站点暴露。首次需在仓库 Settings → Pages → Source 选 **GitHub Actions**（一次性），之后 `https://LPK3215.github.io/chrome-bookmarks-organize/` 即全景观览首页。
+  - 站内 6 处 `../*.md` 文档索引卡链接改为 GitHub `blob/main` 绝对链接（原相对链接在"目录成站点根"后会指向站外 404）；README 徽章区新增 Pages 入口徽章，仓库结构补 `project_overview/` 说明。
+  - 版本同步：SKILL frontmatter 1.14.0 → 1.14.1；行为零变化，54 项回归不增删。
 - 2026-09-08 v1.14.0：**README 与可视化资产增量更新——新增两张随仓库生成的 SVG 示意图及其生成脚本**。
   - 新增 `docs/workflow.svg`（0→7 带循环主流程：准备段只读 → 循环区不动真身 → 唯一写回 finalize → 校验验收 → restore 回底牌）与 `docs/deliverables.svg`（三份交付物从轻到全 + 默认路径判定），README 相应小节挂图（相对路径 `./docs/*.svg`），未删改任何既有正文/ASCII 对照。
   - 新增可复用生成脚本 `scripts/visualization/generate_workflow.py` 与 `generate_deliverables.py`（零第三方依赖，含用途/运行方式/输出路径注释）：图上文案随功能演化后，改脚本重跑即可再生成，禁止手改 SVG。

@@ -1,0 +1,39 @@
+name: pages
+
+# 项目全景观览站自动发布到 GitHub Pages：
+#   触发：push main（或手动 workflow_dispatch）
+#   产物：project_overview/ 整体作为站点根发布，skill 源码（SKILL.md / PROMPT.md / scripts/ 等）不裸露
+#   前提：仓库 Settings → Pages → Source 选「GitHub Actions」（仅需设置一次）
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/configure-pages@v5
+
+      - name: 上传 project_overview 为站点根
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: project_overview
+
+      - name: 部署到 GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

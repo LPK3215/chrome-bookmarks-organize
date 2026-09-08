@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600" font-family="'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif">
+  <defs>
+    <marker id="arw" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1200" height="600" fill="#ffffff"/>
+<text x="600" y="50" text-anchor="middle" font-size="20" font-weight="800" fill="#0f172a">同一套逻辑，三份交付物 —— 从轻到全</text>
+<text x="600" y="78" text-anchor="middle" font-size="13.5" fill="#64748b">跑的是同一条「带循环」的 0→7 流程，差别只在闸门由谁守</text>
+<rect x="60" y="118" width="330" height="300" rx="14" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.5"/>
+<rect x="60" y="118" width="330" height="7" rx="3.5" fill="#38bdf8"/>
+<text x="84" y="162" font-size="21" font-weight="800" fill="#0c4a6e">PROMPT.md</text>
+<rect x="84" y="176" width="4" height="16" rx="2" fill="#38bdf8"/>
+<text x="96" y="189" font-size="13.5" font-weight="600" fill="#0284c7">一段话 · 零安装</text>
+<text x="84" y="216" font-size="11.5" fill="#0284c7" opacity="0.9">〔轻路径〕</text>
+<text x="84" y="250" font-size="13" fill="#0c4a6e">· 复制给任意聊天 AI 就能跑</text>
+<text x="84" y="277" font-size="13" fill="#0c4a6e">· 无闸门：备份/写回全靠临场做对</text>
+<text x="84" y="304" font-size="13" fill="#0c4a6e">· 给一次性整理 · 先体验 · 分享</text>
+<rect x="420" y="118" width="330" height="300" rx="14" fill="#eef2ff" stroke="#4f46e5" stroke-width="1.5"/>
+<rect x="420" y="118" width="330" height="7" rx="3.5" fill="#818cf8"/>
+<text x="444" y="162" font-size="21" font-weight="800" fill="#312e81">SKILL.md</text>
+<rect x="444" y="176" width="4" height="16" rx="2" fill="#818cf8"/>
+<text x="456" y="189" font-size="13.5" font-weight="600" fill="#4f46e5">流程与纪律 · 技能化</text>
+<text x="444" y="216" font-size="11.5" fill="#4f46e5" opacity="0.9">〔中间层〕</text>
+<text x="444" y="250" font-size="13" fill="#312e81">· 同一条 0→7 流程 + 硬约束</text>
+<text x="444" y="277" font-size="13" fill="#312e81">· 拿不到脚本时自动降级执行</text>
+<text x="444" y="304" font-size="13" fill="#312e81">· 可单独加载当提示词 / 装 skill</text>
+<rect x="780" y="118" width="330" height="300" rx="14" fill="#fde68a" stroke="#b45309" stroke-width="1.5"/>
+<rect x="780" y="118" width="330" height="7" rx="3.5" fill="#fbbf24"/>
+<text x="804" y="162" font-size="21" font-weight="800" fill="#451a03">scripts/bm.py</text>
+<rect x="804" y="176" width="4" height="16" rx="2" fill="#fbbf24"/>
+<text x="816" y="189" font-size="13.5" font-weight="600" fill="#b45309">默认执行层 · 闸门锁进代码</text>
+<text x="804" y="216" font-size="11.5" fill="#b45309" opacity="0.9">〔正式用法（推荐）〕</text>
+<text x="804" y="250" font-size="13" fill="#451a03">· 10 个子命令：detect → restore</text>
+<text x="804" y="277" font-size="13" fill="#451a03">· 体检 / 底牌 / 预览 / 原子写回 / 还原</text>
+<text x="804" y="304" font-size="13" fill="#451a03">· 一次写对、每次一样 —— 唯一推荐对</text>
+<text x="804" y="331" font-size="13" fill="#451a03">· 真实书签动手的方式</text>
+<line x1="390" y1="220" x2="416" y2="220" stroke="#94a3b8" stroke-width="2.4" marker-end="url(#arw)"/>
+<line x1="750" y1="220" x2="776" y2="220" stroke="#94a3b8" stroke-width="2.4" marker-end="url(#arw)"/>
+<rect x="60" y="458" width="1080" height="104" rx="14" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5"/>
+<text x="84" y="492" font-size="15" font-weight="700" fill="#0f172a">判定（动手前先看工作区）：</text>
+<text x="84" y="520" font-size="13.5" fill="#0f172a">① 有 <tspan font-weight="700" fill="#b45309">scripts/bm.py</tspan> → 一律走脚本（默认）· 禁止绕开它手改 JSON</text>
+<text x="84" y="544" font-size="13.5" fill="#0f172a">② 拿不到脚本 → 降级「仅提示词」（SKILL.md 流程，AI 人肉守闸）　③ 只是临时体验 → 复制 PROMPT.md</text>
+</svg>

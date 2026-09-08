@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>chrome-bookmarks-organize · 项目全景观览</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+<!-- ===== 滚动进度条 ===== -->
+<div id="progress" aria-hidden="true"></div>
+
+<!-- ===== 顶部导航 ===== -->
+<header class="nav" id="nav">
+  <div class="nav-inner">
+    <a class="nav-brand" href="#hero">
+      <span class="brand-dot" aria-hidden="true"></span>
+      <span class="brand-text">chrome-bookmarks-organize</span>
+    </a>
+    <nav class="nav-links" id="navLinks" aria-label="章节目录">
+      <a href="#intro" data-nav>简介</a>
+      <a href="#arch" data-nav>架构</a>
+      <a href="#flow" data-nav>0→7 流程</a>
+      <a href="#tree" data-nav>目录</a>
+      <a href="#quickstart" data-nav>快速开始</a>
+      <a href="#quality" data-nav>测试·质量</a>
+      <a href="#docs" data-nav>文档索引</a>
+    </nav>
+    <div class="nav-actions">
+      <button class="icon-btn" id="themeToggle" title="切换深色 / 浅色" aria-label="切换主题">
+        <svg id="iconMoon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg id="iconSun" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      </button>
+      <button class="hamburger icon-btn" id="hamburger" aria-label="展开菜单"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    </div>
+  </div>
+</header>
+
+<!-- ===== Hero ===== -->
+<section class="hero" id="hero">
+  <div class="hero-bg" aria-hidden="true"></div>
+  <div class="hero-content">
+    <p class="hero-eyebrow"><span class="eyebrow-line"></span> Agent Skills · MIT · 零第三方依赖</p>
+    <h1 class="hero-title">AI 整理浏览器书签，<br><span class="grad-text">直改 JSON · 默认跑脚本</span></h1>
+    <p class="hero-sub">Chrome / Edge 书签栏太乱？让 AI 按内容归类、重排、去重、改名、清理——直接编辑 <code>Bookmarks</code> 文件，绕开「导出 HTML → 导入」的重复追加问题。</p>
+    <div class="hero-meta">
+      <span class="pill pill-ok">v1.14.0</span>
+      <span class="pill">54 项回归</span>
+      <span class="pill">10 个子命令</span>
+      <span class="pill">Python 仅标准库</span>
+    </div>
+    <div class="hero-cta">
+      <a class="btn btn-primary" href="#quickstart">快速上手</a>
+      <a class="btn btn-ghost" href="#flow">看 0→7 流程</a>
+      <a class="btn btn-link" href="https://github.com/LPK3215/chrome-bookmarks-organize" target="_blank" rel="noopener">GitHub ↗</a>
+    </div>
+  </div>
+  <!-- 关键指标条 -->
+  <div class="stats" id="stats">
+    <div class="stat"><div class="stat-num" data-count="10">0</div><div class="stat-label">子命令 bm.py</div></div>
+    <div class="stat"><div class="stat-num" data-count="54">0</div><div class="stat-label">项回归护栏</div></div>
+    <div class="stat"><div class="stat-num" data-count="0">0</div><div class="stat-label">第三方依赖</div></div>
+    <div class="stat"><div class="stat-num" data-count="3">0</div><div class="stat-label">运行平台 × 2 Python</div></div>
+    <div class="stat"><div class="stat-num" data-count="6">0</div><div class="stat-label">Chromium 系内核</div></div>
+  </div>
+</section>
+
+<main class="wrap">
+
+<!-- ===== 1. 简介 ===== -->
+<section class="sec" id="intro">
+  <h2 class="sec-title"><span class="sec-no">01</span> 项目简介</h2>
+  <div class="grid-2">
+    <div class="card">
+      <h3 class="card-title">解决什么问题</h3>
+      <p>书签的底层存储是一个<strong>纯 JSON 文件、无加密</strong>。常规「导出 HTML → 整理 → 导入」路线里，导入是<em>追加不是替换</em>——整理完总多出一个「已导入」文件夹。本项目改为<strong>直接编辑 Bookmarks JSON</strong>，重启浏览器即生效、开启同步自动同步到账号。</p>
+      <p class="dim">一段话拿给 AI 全凭临场发挥：备份没强制、删了什么不透明、写坏了靠运气。所以把同一套逻辑做成 <strong>三份交付物、从轻到全</strong>。</p>
+    </div>
+    <div class="card">
+      <h3 class="card-title">核心主张：判断题给 AI，算术题给脚本</h3>
+      <ul class="feat-list">
+        <li><strong>判断</strong>归 AI：怎么归类、改名、去重哪些，靠常识与用户拉扯，写在 <code>SKILL.md</code>；</li>
+        <li><strong>算术</strong>归脚本：体检、备份、原子写回、校验、还原——有唯一机械答案，锁进 <code>bm.py</code>；</li>
+        <li><strong>接缝</strong>= 命令行参数：AI 决定开关，脚本保证同一开关的执行永远一致；</li>
+        <li><strong>铁律</strong>：有脚本必用脚本，<em>禁止手改 JSON</em>。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 2. 架构全景 ===== -->
+<section class="sec" id="arch">
+  <h2 class="sec-title"><span class="sec-no">02</span> 架构全景</h2>
+  <div class="card">
+    <p class="dim" style="margin-top:0">三条路跑同一条带循环的 <strong>0→7 流程</strong>，差别只在「闸门由谁守」。模块关系与数据路径如下（悬停节点看说明）：</p>
+
+    <!-- ===== 内联架构 SVG ===== -->
+    <svg class="arch-svg" viewBox="0 0 1000 400" role="img" aria-label="架构关系图">
+      <defs>
+        <linearGradient id="gDeliver" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#38bdf8"/><stop offset="0.5" stop-color="#818cf8"/><stop offset="1" stop-color="#fbbf24"/>
+        </linearGradient>
+        <linearGradient id="gWrite" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#f43f5e"/><stop offset="1" stop-color="#fb923c"/>
+        </linearGradient>
+        <marker id="arr" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/>
+        </marker>
+      </defs>
+
+      <!-- 三层：交付物 -->
+      <text x="500" y="34" text-anchor="middle" class="svg-label">交付物层 · 从轻到全</text>
+      <g class="node" data-tip="一段纯文本提示词。零安装、无闸门：备份/写回全靠 AI 临场做对。给一次性 / 体验 / 分享。">
+        <rect class="b-deliver" x="80"  y="48" width="250" height="58" rx="12"/>
+        <text x="205" y="72" text-anchor="middle" class="svg-ttl">PROMPT.md</text>
+        <text x="205" y="92" text-anchor="middle" class="svg-sub">一段话 · 无闸门 · 轻路径</text>
+      </g>
+      <g class="node" data-tip="skill 化的完整流程与纪律：0→7 + 硬约束 + 无脚本时 AI 人肉守闸的降级执行层。">
+        <rect class="b-deliver" x="375" y="48" width="250" height="58" rx="12"/>
+        <text x="500" y="72" text-anchor="middle" class="svg-ttl">SKILL.md</text>
+        <text x="500" y="92" text-anchor="middle" class="svg-sub">流程与纪律 · 可单独加载</text>
+      </g>
+      <g class="node" data-tip="默认执行层：把纪律锁进可验证的闸门——体检、自动备份、HTML 预览、原子写回、一键还原。">
+        <rect class="b-deliver b-hot" x="670" y="48" width="250" height="58" rx="12"/>
+        <text x="795" y="72" text-anchor="middle" class="svg-ttl">scripts/bm.py</text>
+        <text x="795" y="92" text-anchor="middle" class="svg-sub">默认执行层 · 闸门锁代码</text>
+      </g>
+      <line x1="330" y1="82" x2="370" y2="82" class="svg-arr"/>
+      <line x1="625" y1="82" x2="665" y2="82" class="svg-arr"/>
+
+      <!-- 中间：0→7 引擎 -->
+      <text x="500" y="164" text-anchor="middle" class="svg-label">核心引擎 · 0→7 带循环流程（只有 finalize 写回）</text>
+      <g class="node" data-tip="detect 自动定位各 Profile；preflight 只读体检给 GO/NO-GO；backup 打时间戳底牌 + sha256 + 可直接粘贴的还原命令。">
+        <rect class="b-prep" x="40"  y="180" width="180" height="52" rx="10"/>
+        <text x="130" y="212" text-anchor="middle" class="svg-ttl">detect · preflight · backup</text>
+      </g>
+      <line x1="220" y1="206" x2="252" y2="206" class="svg-arr"/>
+      <g class="node" data-tip="循环区：show 读准结构 → plan 在内存按 --sort/--dedup 重排到候选 → preview 渲染本地 HTML 肉眼核对，与用户反复确认，全程不动真身。">
+        <rect class="b-loop" x="256" y="180" width="170" height="52" rx="10"/>
+        <text x="341" y="204" text-anchor="middle" class="svg-ttl">show · plan · preview</text>
+        <text x="341" y="222" text-anchor="middle" class="svg-sub">⇄ 反复确认 · 不写原文件</text>
+      </g>
+      <line x1="426" y1="206" x2="458" y2="206" class="svg-arr"/>
+      <g class="node" data-tip="唯一动真身的一步：原子写回（.tmp→os.replace）、删 checksum、自动 prescript 兜底、数量护栏、Profile 占用锁。">
+        <rect class="b-write" x="462" y="180" width="150" height="52" rx="10"/>
+        <text x="537" y="212" text-anchor="middle" class="svg-ttl">finalize ⚡唯一写回</text>
+      </g>
+      <line x1="612" y1="206" x2="644" y2="206" class="svg-arr"/>
+      <g class="node" data-tip="verify：结构合法 + 数量对账；diff：路径感知对账（移动/改名/副本减少/增删）；不满意可 restore 回退到底牌那一刻。">
+        <rect class="b-prep" x="648" y="180" width="200" height="52" rx="10"/>
+        <text x="748" y="212" text-anchor="middle" class="svg-ttl">verify · diff · restore</text>
+      </g>
+
+      <!-- 回环 restore -->
+      <path d="M 880 236 C 940 280, 940 320, 640 320" fill="none" stroke="#e11d48" stroke-width="1.6" stroke-dasharray="6 5" marker-end="url(#arr)"/>
+      <text x="905" y="296" class="svg-sub" fill="#e11d48">不满意 → restore</text>
+
+      <!-- 底部：真实文件 -->
+      <text x="500" y="292" text-anchor="middle" class="svg-label">数据路径 · 本地离线</text>
+      <g class="node" data-tip="Bookmarks JSON（Chromium 契约结构：roots.bookmark_bar / other / synced）。改后重启浏览器即生效，同步自动上行。">
+        <rect class="b-file" x="200" y="306" width="600" height="62" rx="12"/>
+        <text x="500" y="330" text-anchor="middle" class="svg-ttl">Bookmarks JSON — 唯一的「真身」</text>
+        <text x="500" y="352" text-anchor="middle" class="svg-sub">roots.bookmark_bar · other · synced　|　重启浏览器生效 · 云端自动同步</text>
+      </g>
+      <line x1="537" y1="232" x2="500" y2="300" class="svg-arr"/>
+      <line x1="130" y1="232" x2="500" y2="300" class="svg-arr" opacity="0"/>
+    </svg>
+    <div class="tip-box" id="svgTip" role="status" aria-live="polite"></div>
+  </div>
+
+  <figure class="fig">
+    <img src="./assets/deliverables.svg" alt="三份交付物从轻到全示意" loading="lazy">
+    <figcaption>三份交付物 · 从轻到全 —— 跑同一条 0→7 流程，差别只在闸门由谁守</figcaption>
+  </figure>
+</section>
+
+<!-- ===== 3. 技术栈 / 亮点 ===== -->
+<section class="sec" id="feat">
+  <h2 class="sec-title"><span class="sec-no">03</span> 技术栈与设计亮点</h2>
+  <div class="grid-3">
+    <div class="card mini">
+      <h3 class="card-title">实现</h3>
+      <ul class="kv">
+        <li>语言：<strong>Python 3</strong>（3.9+）</li>
+        <li>依赖：<strong>仅标准库</strong></li>
+        <li>形态：单文件 <code>bm.py</code> CLI</li>
+        <li>标准：Agent Skills（SKILL.md）</li>
+        <li>技能：Chrome / Edge / Chromium / Brave / Vivaldi / Opera</li>
+      </ul>
+    </div>
+    <div class="card mini">
+      <h3 class="card-title">安全设计</h3>
+      <ul class="feat-list tight">
+        <li>写操作先兜底：finalize 自动 <code>prescript</code>、restore 自动 <code>prerestore</code>；</li>
+        <li>双安全闸：进程检测 + Profile 占用锁（<code>SingletonLock</code>）；</li>
+        <li>原子写回：先 <code>.tmp</code> 再 <code>os.replace</code>，不留半个 JSON；</li>
+        <li>数量护栏：候选 0 条拒绝、&lt;真身 50% 大声告警。</li>
+      </ul>
+    </div>
+    <div class="card mini">
+      <h3 class="card-title">工程护栏</h3>
+      <ul class="feat-list tight">
+        <li>54 项零依赖回归 + CI 三平台 × 2 Python；</li>
+        <li>做过变异验证（改反去重比较符 → 测试立刻变红）；</li>
+        <li>最小参数路径测试，专钉「变量忘初始化」事故；</li>
+        <li>入库通用站点样例，clone 即有靶子、零隐私。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 4. 0→7 流程 ===== -->
+<section class="sec" id="flow">
+  <h2 class="sec-title"><span class="sec-no">04</span> 核心：一条带循环的流程</h2>
+  <p class="dim">不是一路走到底——先读准结构，进〔循环区〕反复改方案，全程不动真身；只有 <code>finalize</code> 真正写文件，不满意可一键 <code>restore</code> 回到底牌那一刻。</p>
+  <figure class="fig">
+    <img src="./assets/workflow.svg" alt="0→7 带循环主流程示意" loading="lazy">
+    <figcaption>0→7 主流程：准备段只读 → 循环区 ⇄ → 唯一写回 → 校验验收 → restore 回底牌</figcaption>
+  </figure>
+  <div class="grid-3">
+    <div class="card mini"><h3 class="card-title">10 个子命令</h3>
+      <table class="mini-tbl">
+        <tr><td><code>detect</code></td><td>自动定位</td></tr>
+        <tr><td><code>preflight</code></td><td>体检 GO/NO-GO</td></tr>
+        <tr><td><code>backup</code></td><td>底牌 + sha256</td></tr>
+        <tr><td><code>show</code></td><td>读结构</td></tr>
+        <tr><td><code>plan</code></td><td>内存重排</td></tr>
+        <tr><td><code>preview</code></td><td>HTML 预览</td></tr>
+        <tr><td><code>diff</code></td><td>路径感知对账</td></tr>
+        <tr><td><code>finalize</code></td><td><strong>唯一写回</strong></td></tr>
+        <tr><td><code>verify</code></td><td>校验</td></tr>
+        <tr><td><code>restore</code></td><td>一键还原</td></tr>
+      </table>
+    </div>
+    <div class="card mini">
+      <h3 class="card-title">路径感知对账</h3>
+      <p>按「路径 + 名称 + 链接」多重集比对，<code>diff</code> / <code>verify --before</code> 能分辨：</p>
+      <ul class="feat-list tight">
+        <li>真删除 / 真新增；</li>
+        <li><strong>移动</strong>：同名链接换了目录；</li>
+        <li><strong>改名</strong>：路径 + 链接不变；</li>
+        <li><strong>副本减少</strong>：删掉多份同名同链中的一份 → 报「副本减少」而非「删除」。</li>
+      </ul>
+    </div>
+    <div class="card mini">
+      <h3 class="card-title">去重规则（不自作主张删）</h3>
+      <ul class="feat-list tight">
+        <li>去重只在<strong>同目录内</strong>合并，跨目录同链接保留；</li>
+        <li><code>show</code> 逐条标注「同目录（会去重）」还是「跨目录（保留）」；</li>
+        <li><code>plan --dedup</code> 保留 <code>date_added</code> 最新的一条。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 5. 目录结构 ===== -->
+<section class="sec" id="tree">
+  <h2 class="sec-title"><span class="sec-no">05</span> 仓库结构</h2>
+  <div class="card">
+    <details class="tree-item" open>
+      <summary>📁 chrome-bookmarks-organize/ <span class="tree-desc">仓库根（本页为 project_overview/，不入核心树）</span></summary>
+      <ul class="tree">
+        <li><details open><summary>📁 scripts/ <span class="tree-desc">脚本与测试</span></summary>
+          <ul>
+            <li>🐍 bm.py <span class="tree-desc">工具箱：单文件 · 零依赖 · 10 个子命令</span></li>
+            <li><details><summary>📁 test/ <span class="tree-desc">回归测试与靶场</span></summary>
+              <ul>
+                <li>🐍 run_tests.py <span class="tree-desc">54 项零依赖回归，改完 bm.py 必跑</span></li>
+                <li><details><summary>📁 sample/ <span class="tree-desc">入库通用站点演示样例</span></summary>
+                  <ul>
+                    <li>📄 Bookmarks.before <span class="tree-desc">乱放 40 条 + 埋点（重复 / 失效链接）</span></li>
+                    <li>📄 Bookmarks.after <span class="tree-desc">归入 7 个类目目录 · 38 条</span></li>
+                    <li>🐍 make_sample.py <span class="tree-desc">确定性生成脚本，可逐字节复现</span></li>
+                    <li>📄 README.md <span class="tree-desc">预期输出对照表</span></li>
+                  </ul>
+                </details></li>
+                <li>📄 README.md <span class="tree-desc">说明 + 不入库的真实快照约定</span></li>
+              </ul>
+            </details></li>
+            <li><details><summary>📁 visualization/ <span class="tree-desc">图表生成脚本（复用入口）</span></summary>
+              <ul>
+                <li>🐍 generate_workflow.py <span class="tree-desc">生成 docs/workflow.svg</span></li>
+                <li>🐍 generate_deliverables.py <span class="tree-desc">生成 docs/deliverables.svg</span></li>
+              </ul>
+            </details></li>
+          </ul>
+        </details></li>
+        <li>📄 README.md <span class="tree-desc">使用方式 · 工具箱 · 安全设计 · 边界</span></li>
+        <li>📄 SKILL.md <span class="tree-desc">技能本体：默认脚本 + 无脚本降级 + Pitfalls</span></li>
+        <li>📄 PROMPT.md <span class="tree-desc">零安装轻路径：整段可复制的一段话</span></li>
+        <li>📄 MAINTENANCE.md <span class="tree-desc">AI/脚本分工合同 · 质量台账 · 变更日志</span></li>
+        <li>📄 LICENSE <span class="tree-desc">MIT · © 2026 LPK3215</span></li>
+        <li><details><summary>📁 docs/ <span class="tree-desc">可视化示意</span></summary>
+          <ul><li>📄 workflow.svg · deliverables.svg <span class="tree-desc">由 scripts/visualization/ 生成</span></li></ul>
+        </details></li>
+        <li><details><summary>📁 .github/workflows/ <span class="tree-desc">CI</span></summary>
+          <ul><li>📄 test.yml <span class="tree-desc">三平台 × Python 3.9/3.11 回归 + 冒烟</span></li></ul>
+        </details></li>
+        <li>⚙️ .gitignore / .gitattributes <span class="tree-desc">屏蔽真实书签快照 · 统一 LF</span></li>
+      </ul>
+    </details>
+    <p class="note">scripts/test/ 下的 <code>Bookmarks.before</code>/<code>Bookmarks.after</code>（真实快照，~99 条）含隐私，被 .gitignore 屏蔽、绝不入库；上树只展示入库结构。</p>
+  </div>
+</section>
+
+<!-- ===== 6. 快速开始 ===== -->
+<section class="sec" id="quickstart">
+  <h2 class="sec-title"><span class="sec-no">06</span> 快速开始</h2>
+  <div class="tabs" role="tablist" aria-label="三种使用方式">
+    <button class="tab active" role="tab" data-tab="t-script" aria-selected="true">技能 + 脚本（默认 · 推荐）</button>
+    <button class="tab" role="tab" data-tab="t-skill" aria-selected="false">仅技能（无脚本降级）</button>
+    <button class="tab" role="tab" data-tab="t-prompt" aria-selected="false">纯提示词（PROMPT.md）</button>
+  </div>
+
+  <div class="tab-panel active" id="t-script" role="tabpanel">
+    <p class="dim">clone 本仓库，浏览器<strong>完全退出</strong>后由 AI 调 <code>scripts/bm.py</code> 走完整流程。</p>
+    <div class="code">
+      <div class="code-head"><span>bash — 默认全流程</span><button class="copy-btn" data-copy="code1">复制</button></div>
+      <pre id="code1"><code>python scripts/bm.py detect                              <span class="c-com"># 找到要整理哪个</span>
+python scripts/bm.py preflight --file "&lt;Bookmarks&gt;"      <span class="c-com"># GO/NO-GO</span>
+python scripts/bm.py backup    --file "&lt;Bookmarks&gt;"      <span class="c-com"># 底牌 + 还原命令</span>
+python scripts/bm.py show      --file "&lt;Bookmarks&gt;"      <span class="c-com"># 读准结构</span>
+python scripts/bm.py plan      --file "&lt;Bookmarks&gt;" --out cand --sort --dedup
+python scripts/bm.py preview   --file cand --base "&lt;Bookmarks&gt;" --out preview.html
+<span class="c-com"># 满意后（浏览器已退出）：</span>
+python scripts/bm.py finalize  --from cand --target "&lt;Bookmarks&gt;"
+python scripts/bm.py verify    --file "&lt;Bookmarks&gt;" --before "&lt;底牌&gt;"
+<span class="c-com"># 不满意：</span>
+python scripts/bm.py restore   --backup "&lt;底牌&gt;" --target "&lt;Bookmarks&gt;"</code></pre>
+    </div>
+  </div>
+
+  <div class="tab-panel" id="t-skill" role="tabpanel">
+    <p class="dim">不下载 <code>scripts/</code>，只把 <code>SKILL.md</code> 加载给 AI：流程不变，AI 按同一套 0→7 + 硬约束自己读写 JSON。</p>
+    <ul class="feat-list">
+      <li>没有进程探测 / sha256 校验 / HTML 预览 / 一键 restore——这些护栏由 AI 人肉执行；</li>
+      <li>关键纪律：先关浏览器 → 自己拷一份底牌 → 改完请你重启验收；</li>
+      <li>适合拿不到脚本（联网装 skill、只贴文件）时的兜底。</li>
+    </ul>
+  </div>
+
+  <div class="tab-panel" id="t-prompt" role="tabpanel">
+    <p class="dim">把 <code>PROMPT.md</code> 里整段提示词复制给任意聊天 AI（Claude / CodeBuddy / GPT…），再补一句你的书签文件路径即可。</p>
+    <ul class="feat-list">
+      <li>零安装、不 clone、一次性小改、先体验、拿去分享；</li>
+      <li>最轻也最裸：无闸门，备份/退浏览器/写 UTF-8 全靠 AI 临场做对，不是正式整理方式。</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ===== 7. 测试与质量 ===== -->
+<section class="sec" id="quality">
+  <h2 class="sec-title"><span class="sec-no">07</span> 测试与质量保障</h2>
+  <div class="grid-2">
+    <div class="card">
+      <h3 class="card-title">回归护栏（锁安全不变量）</h3>
+      <ul class="feat-list tight">
+        <li><strong>run_tests.py</strong>：54 项 · 零依赖 unittest · 约 1 秒；</li>
+        <li>覆盖：双安全闸 / 原子写回 / 候选非法不落地 / 路径感知对账 / detect 三平台根 / 最小参数路径 / 脏输入边界；</li>
+        <li><strong>CI</strong>（.github/workflows/test.yml）：Windows / macOS / Linux × Python 3.9 / 3.11，同一套测试 + 样例冒烟；</li>
+        <li>已做<strong>变异验证</strong>：把「保留最新」比较符改反 → 测试立刻变红，证明有约束力。</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 class="card-title">主要测试类</h3>
+      <div class="tag-cloud">
+        <span>TestFinalizeSafety</span><span>TestRestoreSafety</span><span>TestDedupAndSort</span><span>TestDiffClassification</span><span>TestDetectRoots</span><span>TestVerifyAndShow</span><span>TestPreflightSyncAwareness</span><span>TestProfileOccupancy</span><span>TestMinimumArgumentPaths</span><span>TestEdgeInputRobustness</span><span>TestRestoreCorruptBackup</span><span>TestFinalizeSelfTarget</span>
+      </div>
+      <p class="dim" style="margin-bottom:0">真实验收按阶梯推进：<strong>L0 合成样例 → L1 一次性 Profile（含重启）→ L2 真实只读 → L3 完整整理</strong>。</p>
+    </div>
+  </div>
+
+  <div class="card chart-card">
+    <div class="chart-head">
+      <h3 class="card-title" style="margin:0">护栏成长曲线（真实变更日志）</h3>
+      <div class="tabrow" role="tablist">
+        <button class="tab tab-mini active" data-tab="chart-view" role="tab">图表</button>
+        <button class="tab tab-mini" data-tab="table-view" role="tab">表格</button>
+      </div>
+    </div>
+    <div class="panel active" id="chart-view">
+      <div class="chart-box"><canvas id="guardChart"></canvas></div>
+    </div>
+    <div class="panel" id="table-view">
+      <table class="data-tbl">
+        <thead><tr><th>版本</th><th>里程碑</th><th>回归测试</th></tr></thead>
+        <tbody>
+          <tr><td>v1.6.0</td><td>引入 run_tests.py</td><td>28 项</td></tr>
+          <tr><td>v1.7.0</td><td>云端同步感知</td><td>32 项</td></tr>
+          <tr><td>v1.8.0</td><td>Profile 占用锁 / 最小参数路径</td><td>42 项</td></tr>
+          <tr><td>v1.9.0</td><td>坏底牌拒绝还原 / 拒绝自我覆盖</td><td>46 项</td></tr>
+          <tr><td>v1.10.0</td><td>finalize 数量护栏</td><td>48 项</td></tr>
+          <tr><td>v1.13.0</td><td>脏输入边界加固一轮</td><td>54 项</td></tr>
+          <tr><td>v1.14.0</td><td>可视化资产（行为零变化）</td><td>54 项</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3 class="card-title">样例一图看懂整理效果</h3>
+      <div class="sample-wrap">
+        <div class="sample-col">
+          <h4>before · 乱放 40 条</h4>
+          <ul class="tree flat">
+            <li>书签栏 ─ 10 条平铺</li>
+            <li>📁 新建文件夹</li>
+            <li>📁 新建文件夹 (1)</li>
+            <li>📁 新建文件夹 (2)</li>
+            <li>… 无分类、重复收藏</li>
+          </ul>
+        </div>
+        <div class="sample-arrow">→</div>
+        <div class="sample-col">
+          <h4>after · 归入 7 类目 · 38 条</h4>
+          <ul class="tree flat">
+            <li>📁 购物 / 新闻资讯 / 技术开发</li>
+            <li>📁 学习资源 / 视频娱乐 / 生活工具</li>
+            <li>📁 博客与阅读</li>
+            <li>同目录重复并入 1 条</li>
+            <li>失效旧链接已删除（净变化 −2）</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3 class="card-title">演示数据刻意埋点</h3>
+      <table class="data-tbl">
+        <thead><tr><th>埋点</th><th>验证什么</th></tr></thead>
+        <tbody>
+          <tr><td>「大众点评」同目录 ×2（日期不同）</td><td><code>plan --dedup</code> 保留最新 → diff 报「副本减少」</td></tr>
+          <tr><td>失效旧链接一条</td><td>diff 报「删除」——真实清理动作</td></tr>
+          <tr><td>40 条全部移动进类目</td><td>diff / preview --base 的「移动」对账</td></tr>
+          <tr><td>before 有 checksum / after 无</td><td>finalize 删 checksum 行为</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 8. 文档索引 ===== -->
+<section class="sec" id="docs">
+  <h2 class="sec-title"><span class="sec-no">08</span> 文档索引</h2>
+  <div class="doc-grid">
+    <a class="doc-card" href="https://github.com/LPK3215/chrome-bookmarks-organize/blob/main/README.md" target="_blank"><h3>README.md</h3><p>使用方式 · 工具箱 10 子命令 · 安全设计 · 三层自查 · 仓库结构 · 已知边界</p></a>
+    <a class="doc-card" href="https://github.com/LPK3215/chrome-bookmarks-organize/blob/main/SKILL.md" target="_blank"><h3>SKILL.md</h3><p>技能本体（Agent Skills）：默认脚本 + 仅提示词硬约束 + 步骤 + Pitfalls</p></a>
+    <a class="doc-card" href="https://github.com/LPK3215/chrome-bookmarks-organize/blob/main/PROMPT.md" target="_blank"><h3>PROMPT.md</h3><p>零安装轻路径：整段可复制的提示词，先读「无脚本闸门」声明</p></a>
+    <a class="doc-card" href="https://github.com/LPK3215/chrome-bookmarks-organize/blob/main/MAINTENANCE.md" target="_blank"><h3>MAINTENANCE.md</h3><p>AI/脚本分工合同 · 质量台账 · 边界矩阵 · 验收阶梯 · 变更日志</p></a>
+    <a class="doc-card" href="https://github.com/LPK3215/chrome-bookmarks-organize/blob/main/scripts/test/sample/README.md" target="_blank"><h3>sample/README.md</h3><p>通用站点演示样例：数据说明 + 刻意埋点 + 预期输出对照</p></a>
+    <a class="doc-card" href="https://github.com/LPK3215/chrome-bookmarks-organize/blob/main/LICENSE" target="_blank"><h3>LICENSE</h3><p>MIT License · © 2026 LPK3215</p></a>
+  </div>
+</section>
+
+<!-- ===== 9. 已知边界 ===== -->
+<section class="sec" id="limits">
+  <h2 class="sec-title"><span class="sec-no">09</span> 使用前提与已知边界</h2>
+  <div class="grid-2">
+    <div class="card">
+      <h3 class="card-title">硬性前提</h3>
+      <ul class="feat-list tight">
+        <li>整理真实书签时浏览器必须<strong>完全退出</strong>（含托盘后台）——脚本由 preflight/finalize 拦截，仅提示词靠开口确认；</li>
+        <li>整理规则先与 AI 确认，<strong>不自作主张删除任何一条书签</strong>。</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 class="card-title">已知边界</h3>
+      <ul class="feat-list tight">
+        <li>没有「热编辑」：改文件时浏览器必须关着；</li>
+        <li><code>date_added</code> 为 Chrome 时间戳（自 1601-01-01 的微秒），已自动转日期；</li>
+        <li>只管结构整理，不判断链接是否失效 / 内容好坏；</li>
+        <li>detect 的 macOS/Linux 分支与更多内核已实现，但尚未在非 Windows 机器实测（由 CI 兜底）。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <p><strong>chrome-bookmarks-organize</strong> v1.14.0 · MIT © 2026 LPK3215 · Agent Skills 标准 · 本地离线零依赖</p>
+    <p class="dim">让 AI 整理书签 = 判断题交给 AI、算术题锁进脚本；默认用脚本跑，禁止手改 JSON。</p>
+  </div>
+</footer>
+
+<button class="to-top" id="toTop" aria-label="返回顶部">
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5m-7 7 7-7 7 7"/></svg>
+</button>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="./charts.js"></script>
+<script src="./script.js"></script>
+<!-- 生成时间：2026-09-08 · chrome-bookmarks-organize v1.14.0 全景观览页 -->
+</body>
+</html>

@@ -9,6 +9,8 @@
 - **算术题 → 脚本做**（一次写对永久对，锁进 `bm.py`）：有唯一机械答案、不容手滑的。
 - **接缝 = 命令行参数**：AI 决定"选哪个开关、传什么路径"，脚本保证"这个开关的执行永远一致"。例：*要不要去重 / 跨目录同链接算不算重复*是 AI 的判断；`--dedup` 一旦按下，*遍历、比 `date_added` 取最新、删多余节点*全是脚本的活。
 
+`SKILL.md` 本身就是提示词，可单独加载（联网装 skill 即可，不必下载仓库）。无 `bm.py` 时 AI 走「仅提示词」硬约束自己读写 JSON；有脚本时禁止手改真身，判断仍归 AI、执行锁进脚本。脚本模式在安全/准确/合法/一致性上更强，所以推荐下载仓库再整理真实书签。
+
 ## 2. 分工总表
 
 | 流程环节 | AI 做动作（判断，写进 SKILL） | 脚本做动作（确定性，bm.py） |
@@ -28,14 +30,14 @@
 |---|---|---|---|---|
 | detect | 按 OS 环境变量自动定位 Bookmarks | 本机重探到 Chrome Default/Profile 1、Edge Default；mtime 排序、"疑似在用"标记、`Local State` 显示名「LPK」均对；`--browser edge` 过滤有效 | 2026-09-08 | 已扩 Chromium/Brave/Vivaldi/Opera 根（**mac/linux 未在本机验**）；"整块 AppData 挪别的盘"仍需 `--root` |
 | preflight | 只读体检 → GO/NO-GO | Chrome 开着时正确判 NO-GO(浏览器在跑)、rc=2；chmod 444 时正确判"不可写"NO-GO；缺文件/损坏 JSON 均报 NO-GO | 2026-09-08 | 进程探测靠 tasklist/pgrep，探测不可用时只告警不阻断（交由 finalize） |
-| backup | 底牌+manifest | 合成靶子跑通；**微秒时间戳防同秒碰撞 + 复制后 sha256 校验**（不一致即丢弃并报错） | 2026-09-08 | 真实文件仅做只读快照，未跑写操作（符合预期） |
-| show | 读结构+体检 | 合成靶子识别重复URL/checksum；真实快照报 3276 条；缺文件/损坏 JSON 现走 main 兜底给干净中文 | 2026-09-08 | 超大全树（>3000条）输出刷屏，考虑加 `--depth` |
+| backup | 底牌+manifest | 微秒时间戳防同秒碰撞 + 复制后 sha256 校验（不一致即丢弃并报错）；**`restore_cmd` 已改绝对路径**（解释器+脚本+底牌+目标），任何目录下可直接粘贴运行；源 JSON 损坏时仍会留下底牌与记录，不会被异常吞掉 | 2026-09-08 | 真实文件仅做只读快照，未跑写操作（符合预期） |
+| show | 读结构+体检 | 新增 `--depth N`（只打到第 N 层）/ `--stats`（只看体检）；>300 条自动提醒改用这两个开关；重复 URL **逐条标注「同目录→会被去重」还是「跨目录→保留」**，消除"AI 拿着全树重复表向用户承诺去重"的误判；重复 id 改用 Counter 一次扫出（原 O(n²) 写法已删）；缺 `roots` 给干净中文而非 KeyError | 2026-09-08 | 排序为 Unicode 码点序，非中文拼音序（需 locale/第三方库，暂搁） |
 | plan | 内存重排到候选 | sort+dedup 跑通，原文件 0 改动已证明；真实快照 3276→3275（并掉 1 条同目录重复） | 2026-09-08 | 仅 `--sort/--dedup`；改名/移动/新建目录尚未脚本化（暂靠 AI 改 JSON） |
-| preview | 本地HTML嵌套树预览 | 合成+真实快照渲染成功；真·嵌套 `<ul>` 树；**目录已可折叠（原生 `<details>`，无 JS）**；带 `--base` 列增删 | 2026-09-08 | 折叠默认全展开；如需"默认收起深层"再加开关 |
-| diff | 两份书签增删对账 | 控制台列被删/新增 URL + 净变化数 | 2026-09-08 | **按 (name,url) 集合比对（非多重集）**：删掉多份同名同链中的一份不会计为"删除"；同名改 URL 计为 1 删 1 增 |
-| finalize | 唯一动真身 | **Chrome 开着时拒绝写回（干净中文提示，rc=1）；`--force` 放行并自动 prescript 兜底 + 改名陈旧 .bak**；只读/占用写失败给人话且保留兜底件 | 2026-09-08 | 真实浏览器 Profile 仍未 finalize（测试期只打 `scripts/test/` 副本） |
+| preview | 本地HTML嵌套树预览 | 真·嵌套 `<ul>` 树；**目录可折叠（原生 `<details>`，无 JS）**；`--base` 差异区已与 `diff` 共用同一套分类（删/增/移动/改名/副本减少，按颜色区分） | 2026-09-08 | 折叠默认全展开；如需"默认收起深层"再加开关 |
+| diff | 两份书签增删对账 | **重写为「路径+名称+链接」的多重集比对**：能区分真删除/真新增/**移动**/改名/**副本减少**，并把 `(名称,链接)` 仍在对方的条目判为"副本减少"而非"删除"；新增路徑有助于发现"纯整理目录"这种过去会报"删0/增0"的场景 | 2026-09-08 | 改名+移动同时发生时，按"先配改名再配移动"的顺序处理，极端多重重名场景可能配对次序不理想（暂未发现误判） |
+| finalize | 唯一动真身 | Chrome 开着拒绝（rc=1）；`--force` 放行 + 自动 prescript 兜底 + 改名陈旧 .bak；**新增：写回前先验候选结构（缺 roots/三根之一即拒）**；**写回改为先落 `.tmp` 再 `os.replace` 的原子替换**，中途失败不再留下半个 JSON；安全闸与本表 restore 共用同一实现 | 2026-09-08 | 真实浏览器 Profile 仍未 finalize（测试期只打临时目录副本） |
 | verify | 校验+对账 | 合成+真实文件跑通；BOM 文件也能读；损坏 JSON 自身捕获报错 | 2026-09-08 | `--before` 对账依赖传对底牌路径 |
-| restore | 一键还原 | 合成靶子验证可退回改动前；真实快照退回 3276+checksum | 2026-09-08 | 还原后 `.bak.stale-*`/`.prescript-*` 不自动清理，是否纳入待定 |
+| restore | 回退到底牌那一刻 | **补齐与 finalize 同级的安全闸**：浏览器在跑即拒（需 `--force`）+ 自动 `prerestore` 兜底当前状态；输出明确"回退到底牌拍摄时刻"及同步场景提醒 | 2026-09-08 | 还原后 `.bak.stale-*`/`.prescript-*` 不自动清理，是否纳入待定；同步窗口期内他端新增书签会被一并退回（已写进 SKILL Pitfalls） |
 
 ## 4. 已知边界与坑（喂给 SKILL 的 Pitfalls，此处记技术成因）
 
@@ -64,15 +66,28 @@
 | 复制不完整（底牌坏） | `backup` 复制后 sha256 校验，不一致即丢弃报错 | 逻辑就位 |
 | `finalize` 跑两次（幂等） | 第二次无 `.bak` 可改、checksum 已无，安全 | 逻辑就位 |
 | 含 `feature_endpoint` 等新根 | `plan/finalize` 只动已知 roots 子树、整 dict 原样写回，其余键不丢 | 逻辑就位 |
-| 超大全树刷屏 | `preview` 嵌套树；`show` 待加 `--depth` | 部分 |
-| Windows 中文控制台乱码 | stdout + stderr 均 `reconfigure(utf-8)` | ✅（本会话修 bug） |
+| 超大全树刷屏 | `show --depth N` / `--stats` + >300 条自动提醒 | ✅ |
+| Windows 中文控制台乱码 | stdout + stderr 均 `reconfigure(utf-8)` | ✅ |
+| **写回写到一半失败（磁盘满/被占用）** | 先写 `.tmp` 再 `os.replace` 原子替换，真身永不为半截 JSON | ✅（代码就位） |
+| **候选文件本身是垃圾/结构非法** | `finalize` 先验证 `roots` 与三个根之一，不合法直接拒绝写回 | ✅ |
+| **还原时浏览器在跑** | `restore` 与 `finalize` 共用 `_safety_gate`，同样拒绝并提供 `--force` | ✅（Chrome 开着→拒） |
+| **clone 后没有任何可用数据** | 新增**入库的合成样例** `scripts/test/sample/`（虚构 18 条 + 生成脚本），真实快照仍被忽略 | ✅ |
+| 跨平台行尾打架 | 新增 `.gitattributes`（`* text=auto eol=lf`） | ✅ |
+| 装了进程名清单之外的 Chromium 内核浏览器 | 进程名表固定，`--force` 之外会**漏检**（危险方向是漏检不是误报） | 已知风险，建议由人确认 |
 
 ## 6. 测试案例 `scripts/test/`（常驻 · 勿删）
 
-- 内容：`Bookmarks.before`（真实书签裁剪到 ~99 条、保留目录骨架、含 checksum）、`Bookmarks.after`（在 before 上做改名+新增+删除、去 checksum）、`preview-before.html`、`preview-after.html`。**2 数据 + 2 预览**，一眼对比整理前后。
-- 定位：脚本对不对，先拿它对这份案例跑一遍、比对预览；预览与预期一致，才允许对真实数据落地。
-- **测试铁律**：`finalize` 的 `--target` 永远只指 `scripts/test/` 里的副本，**绝不指向真实 Chrome/Edge Profile**。真实 Profile 仅在最终正式整理、且浏览器完全退出时才当 target。
-- 隐私：数据源自真实书签（虽已裁剪），被 `.gitignore` 屏蔽、不入库。将来换成彻底脱敏/虚构数据后，可解除忽略、纳入仓库当公开样例。详见 `scripts/test/README.md`。
+本目录住着**两套**数据，别混为一谈：
+
+| 位置 | 性质 | 是否入库 | 用途 |
+|---|---|---|---|
+| `test/sample/` | **纯虚构**合成样例（18 条）+ `make_sample.py` | ✅ 入库 | clone 后立刻有靶子；兼作回归验收基准 |
+| `test/Bookmarks.*` | 真实书签裁剪快照（~99 条） | ❌ 被 `.gitignore` 屏蔽 | 本地验证真实结构手感 |
+
+- **为什么要有 `sample/`**：真实快照含隐私、不入库，若仓库里只留命令文档，clone 的人第一次执行就撞空。`sample/` 埋了同目录重复 / 跨目录重复 / 重复 id / 移动 / 改名 / 增删，一步 `diff` 就能把工具箱的能力全验一遍，预期输出写在 `sample/README.md`。
+- **定位**：脚本对不对，先拿 `sample/` 跑一遍、比对输出；一致才允许对真实数据落地。
+- **测试铁律**：`finalize` 的 `--target` 永远只指**临时目录里的副本**，绝不指向真实 Chrome/Edge Profile，也不要指向 `test/Bookmarks.*`（那是基准，不是靶子）。真实 Profile 仅在最终正式整理、且浏览器完全退出时才当 target。
+- **隐私**：`test/Bookmarks.*` 源自真实书签（虽已裁剪），绝不入库/外推；将来换成彻底脱敏/虚构数据后可解除忽略。详见 `scripts/test/README.md`。
 
 ## 7. 变更日志
 
@@ -83,3 +98,11 @@
 - 2026-09-08 v1.3.0：为真实世界加固——加 `preflight`(GO/NO-GO 闸门) 与 `diff`；`load` 容错 BOM/缺失、`main()` 统一兜异常；`backup` 微秒时间戳+复制后 sha256 校验；`finalize` 检测浏览器在跑即拒(除非 `--force`)+自动 prescript 兜底+写失败给人话；`detect` 扩 Chromium/Brave/Vivaldi/Opera；**修 stderr 未切 UTF-8 致中文报错乱码的 bug**；跑通边界测试电池；SKILL 升 v1.2.0、preflight 入第 0 步。
 - 2026-09-08 v1.3.2：文档对齐——`README` 重写以反映 10 子命令工具箱 + 带循环流程 + detect/preflight，`SKILL` Verification 更新。**在真实导出快照上跑完整 E2E**：preflight 因浏览器开着判 NO-GO；finalize 无 `--force` 被拒、加 `--force` 放行并自动 prescript + 改名 .bak；verify 全绿；diff 在"总数不变(3276→3276)但组成变了"的增删改下仍报"删2/增2"；restore 后与 .bak sha256 一致、满血复原。**结论：工具箱可用。**
 - 2026-09-08 v1.4.0：`preview` 目录改为**原生 `<details>` 可折叠**（无 JS）。**结构大清理**：删 `_demo`/`_test`/`_scratch`/`__pycache__`，合并为单一 `scripts/test/` 对比案例——`Bookmarks.before`(真实数据裁剪到 ~99、含 checksum) + `Bookmarks.after`(改名+新增+删除、去 checksum) + `preview-before.html` + `preview-after.html`；同步改 `.gitignore` 与全部文档引用。在裁剪数据上**重跑完整流程全绿**。发现并记录 `diff` 集合语义局限（删重名重链中的一份不计为删除）。
+- 2026-09-08：文档写清**两种用法**——仅加载 `SKILL.md` 当提示词（可联网、不下载脚本）vs 下载仓库走 `bm.py`（推荐）。SKILL 增加用法判定 +「仅提示词时怎么做」硬约束；有脚本禁止手改，没脚本禁止空跑 `bm.py`。
+- 2026-09-08 v1.5.0：一轮加固与对齐——把"敢让它动真实数据"补严，并让 clone 下来的人也有靶子可练。
+  - **安全补齐**：`restore` 补上与 `finalize` 同级的进程安全闸 + 自动 `prerestore` 兜底（此前它是唯一缺闸的写操作）；`backup` 的 `restore_cmd` 改为绝对路径（原来写 `python bm.py`，用户照抄必失败）；`finalize` 写回改为「先验候选结构 → 写 `.tmp` → `os.replace`」的原子替换（原来直接 `open(w)` 截断，中途失败会留下半个 JSON）；`finalize`/`restore` 的闸门抽成同一份实现，不再各写一遍。
+  - **`diff`/`preview` 重写为路径感知**：按「路径+名称+链接」多重集对账，能识别**移动 / 改名 / 副本减少**。此前纯整理目录会报"删 0 / 增 0"，用户以为脚本没干活；同目录去重也会被误报成"删除"。
+  - **`show` 可用性**：新增 `--depth N` / `--stats`，>300 条自动提醒；重复 URL 逐条标注"同目录（会去重）/ 跨目录（保留）"，堵住"AI 拿着全树重复表向用户承诺去重"的误判；`roots` 缺失给干净中文而非 KeyError。
+  - **性能与隐患**：重复 id 由列表 `count()`（O(n²)）改为 Counter；`_dedup_children` 由 `list.index(dict)`（按值比较，可能替换错对象）改为记录下标。
+  - **新增入库样例** `scripts/test/sample/`（虚构 18 条 + 生成脚本）并调整 `.gitignore` 放行它——解决"clone 后没有能练手的靶子"；真实快照仍被屏蔽。新增 `.gitattributes` 统一 LF。
+  - **文档对齐**：三处 README/SKILL/MAINTENANCE 的表、Pitfalls、边界矩阵、台账全部更新到当前行为；版本号统一到 1.5.0；README 新增「第一次用不敢放心？三层自查」，把信任建立在可自查的事实上而非承诺上。

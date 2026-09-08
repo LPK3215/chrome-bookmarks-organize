@@ -1,0 +1,260 @@
+{
+   "roots": {
+      "bookmark_bar": {
+         "children": [
+            {
+               "children": [
+                  {
+                     "date_added": "13353724800000000",
+                     "guid": "sample-guid-4700",
+                     "id": "1",
+                     "name": "MDN Web 文档",
+                     "type": "url",
+                     "url": "https://developer.mozilla.org/"
+                  },
+                  {
+                     "date_added": "13336272000000000",
+                     "guid": "sample-guid-4700",
+                     "id": "2",
+                     "name": "MDN Web 文档",
+                     "type": "url",
+                     "url": "https://developer.mozilla.org/"
+                  },
+                  {
+                     "children": [
+                        {
+                           "date_added": "13359081600000000",
+                           "guid": "sample-guid-1150",
+                           "id": "3",
+                           "name": "CSS Tricks",
+                           "type": "url",
+                           "url": "https://css-tricks.com/"
+                        },
+                        {
+                           "date_added": "13359168000000000",
+                           "guid": "sample-guid-1618",
+                           "id": "4",
+                           "name": "Can I use",
+                           "type": "url",
+                           "url": "https://caniuse.com/"
+                        }
+                     ],
+                     "date_added": "13358995200000000",
+                     "date_last_used": "0",
+                     "guid": "sample-folder-5275",
+                     "id": "5",
+                     "name": "前端",
+                     "type": "folder"
+                  },
+                  {
+                     "children": [
+                        {
+                           "date_added": "13357180800000000",
+                           "guid": "sample-guid-1187",
+                           "id": "6",
+                           "name": "Python 官方文档",
+                           "type": "url",
+                           "url": "https://docs.python.org/"
+                        },
+                        {
+                           "date_added": "13357267200000000",
+                           "guid": "sample-guid-7723",
+                           "id": "7",
+                           "name": "Go by Example",
+                           "type": "url",
+                           "url": "https://gobyexample.com/"
+                        }
+                     ],
+                     "date_added": "13356403200000000",
+                     "date_last_used": "0",
+                     "guid": "sample-folder-9758",
+                     "id": "8",
+                     "name": "后端",
+                     "type": "folder"
+                  }
+               ],
+               "date_added": "13348627200000000",
+               "date_last_used": "0",
+               "guid": "sample-folder-1518",
+               "id": "9",
+               "name": "开发",
+               "type": "folder"
+            },
+            {
+               "children": [
+                  {
+                     "date_added": "13382841600000000",
+                     "guid": "sample-guid-783",
+                     "id": "10",
+                     "name": "示例论文站",
+                     "type": "url",
+                     "url": "https://example-papers.test/"
+                  },
+                  {
+                     "date_added": "13382928000000000",
+                     "guid": "sample-guid-4590",
+                     "id": "11",
+                     "name": "示例模型卡",
+                     "type": "url",
+                     "url": "https://example-models.test/"
+                  },
+                  {
+                     "date_added": "13385433600000000",
+                     "guid": "sample-guid-9271",
+                     "id": "20",
+                     "name": "待移动",
+                     "type": "url",
+                     "url": "https://example-move.test/"
+                  }
+               ],
+               "date_added": "13380508800000000",
+               "date_last_used": "0",
+               "guid": "sample-folder-4024",
+               "id": "12",
+               "name": "AI",
+               "type": "folder"
+            },
+            {
+               "children": [
+                  {
+                     "date_added": "13393209600000000",
+                     "guid": "sample-guid-3141",
+                     "id": "13",
+                     "name": "示例新闻站",
+                     "type": "url",
+                     "url": "https://example-news.test/"
+                  },
+                  {
+                     "date_added": "13393296000000000",
+                     "guid": "sample-guid-4712",
+                     "id": "14",
+                     "name": "示例论坛",
+                     "type": "url",
+                     "url": "https://example-forum.test/"
+                  },
+                  {
+                     "date_added": "13393382400000000",
+                     "guid": "sample-guid-1757",
+                     "id": "15",
+                     "name": "示例工具站",
+                     "type": "url",
+                     "url": "https://example-tools.test/"
+                  }
+               ],
+               "date_added": "13390531200000000",
+               "date_last_used": "0",
+               "guid": "sample-folder-3349",
+               "id": "16",
+               "name": "常读",
+               "type": "folder"
+            },
+            {
+               "children": [
+                  {
+                     "date_added": "13395801600000000",
+                     "guid": "sample-guid-1757",
+                     "id": "17",
+                     "name": "示例工具站",
+                     "type": "url",
+                     "url": "https://example-tools.test/"
+                  }
+               ],
+               "date_added": "13385260800000000",
+               "date_last_used": "0",
+               "guid": "sample-folder-9467",
+               "id": "21",
+               "name": "工具箱-已重命名",
+               "type": "folder"
+            },
+            {
+               "children": [
+                  {
+                     "date_added": "13411699200000000",
+                     "guid": "sample-guid-3981",
+                     "id": "1",
+                     "name": "新增示例A",
+                     "type": "url",
+                     "url": "https://example-added-a.test/"
+                  },
+                  {
+                     "date_added": "13411785600000000",
+                     "guid": "sample-guid-9951",
+                     "id": "2",
+                     "name": "新增示例B",
+                     "type": "url",
+                     "url": "https://example-added-b.test/"
+                  }
+               ],
+               "date_added": "13411699200000000",
+               "date_last_used": "0",
+               "guid": "sample-folder-1509",
+               "id": "29",
+               "name": "新增-归档",
+               "type": "folder"
+            }
+         ],
+         "date_added": "13348540800000000",
+         "date_last_used": "0",
+         "guid": "sample-folder-8404",
+         "id": "22",
+         "name": "书签栏",
+         "type": "folder"
+      },
+      "other": {
+         "children": [
+            {
+               "date_added": "13374892800000000",
+               "guid": "sample-guid-4171",
+               "id": "23",
+               "name": "示例归档文章",
+               "type": "url",
+               "url": "https://example-archive.test/"
+            },
+            {
+               "children": [
+                  {
+                     "date_added": "13345862400000000",
+                     "guid": "sample-guid-8536",
+                     "id": "24",
+                     "name": "示例旧链接",
+                     "type": "url",
+                     "url": "https://example-old.test/"
+                  }
+               ],
+               "date_added": "13345862400000000",
+               "date_last_used": "0",
+               "guid": "sample-folder-9675",
+               "id": "25",
+               "name": "旧杂物",
+               "type": "folder"
+            }
+         ],
+         "date_added": "13372214400000000",
+         "date_last_used": "0",
+         "guid": "sample-folder-6047",
+         "id": "26",
+         "name": "其他书签",
+         "type": "folder"
+      },
+      "synced": {
+         "children": [
+            {
+               "date_added": "13380163200000000",
+               "guid": "sample-guid-1844",
+               "id": "27",
+               "name": "手机上存的示例页",
+               "type": "url",
+               "url": "https://example-mobile.test/"
+            }
+         ],
+         "date_added": "13380163200000000",
+         "date_last_used": "0",
+         "guid": "sample-folder-2283",
+         "id": "28",
+         "name": "移动设备书签",
+         "type": "folder"
+      }
+   },
+   "sync_metadata": "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF",
+   "version": 1
+}

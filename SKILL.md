@@ -1,7 +1,7 @@
 ---
 name: chrome-bookmarks-organize
 description: 直接编辑 Chrome/Edge 的 Bookmarks JSON 文件，让 AI 整理浏览器书签（重排目录/改名/去重/排序），完全绕开"导出HTML→导入"的重复追加问题。用户要求整理收藏夹、批量修改书签结构时使用。
-version: 1.4.0
+version: 1.5.0
 ---
 
 # Chrome 书签直改整理
@@ -10,12 +10,27 @@ version: 1.4.0
 
 浏览器书签底层是纯 JSON 文件（无加密）。直接改文件 = 改正式数据，重启浏览器后生效，开启同步时自动同步到账号。**唯一硬性要求：浏览器必须完全退出后再改**——运行时书签缓存在内存里，退出时会用旧数据覆盖磁盘上的修改。
 
-配套一个离线、零第三方依赖的小工具 `scripts/bm.py`（Python 3，仅需标准库）。**流程不是直线跑到底，而是"读准结构 →〔反复沟通改方案，全程不动真身〕→ 确认后才写回 → 校验 → 不满意一键还原回循环"**。只有 `finalize` 一步会真正改文件，其余都在内存/候选文件里折腾。
+配套一个离线、零第三方依赖的小工具 `scripts/bm.py`（Python 3，仅需标准库）。**流程不是直线跑到底，而是"读准结构 →〔反复沟通改方案，全程不动真身〕→ 确认后才写回 → 校验 → 不满意一键还原回循环"**。只有写回那一步会真正改文件，其余都在内存/候选文件里折腾。
+
+## 用法判定（动手前先看有没有脚本）
+
+本文件就是技能，也就是提示词。脚本是加分项，不是门槛。
+
+动手前先看**本技能所在目录**有没有 `scripts/bm.py`：
+
+| 判定 | 用法 | 怎么做 |
+|---|---|---|
+| **有** `scripts/bm.py` | **脚本模式（推荐）** | 走下方「步骤」里的 `python scripts/bm.py …`。安全闸门、备份、写回、校验都锁在脚本里。 |
+| **没有**（只加载了本文件：联网装 skill、只贴了 SKILL.md、没 clone 仓库） | **仅提示词模式** | **不要去跑 `bm.py`**（命令不存在）。改走「仅提示词时怎么做」，按同一套 0→7 自己读写 JSON，并守那一节的硬约束。 |
+
+有脚本却手改 JSON = 丢掉护栏，禁止。没有脚本却硬跑 `bm.py` = 命令找不到，改走仅提示词。
 
 ## 步骤
 
+> 以下命令默认**脚本模式**。仅提示词时不要执行这些命令，改走「仅提示词时怎么做」。
+
 > **路径不写死**：先跑 `python scripts/bm.py detect` 让脚本按当前 OS 的环境变量自动定位所有 Profile 的 `Bookmarks`（列修改时间 / url 数 / 标"疑似在用"，并从 `Local State` 读出 Profile 显示名），**与用户确认整理哪一个**再往下。若浏览器用 `--user-data-dir` 挪过位置：`python scripts/bm.py detect --root "<你的根>"`，或给任何命令直接显式传 `--file`。
-> 原理（"相对死"而非"直接死"）：`Bookmarks` 这个文件名 + `<根>/<Profile>/Bookmarks` 的相对结构是 Chrome 固定契约，用户改不了，故写死合理；唯一会变的是"根"——Windows `%LOCALAPPDATA%`、macOS `~/Library/Application Support`、Linux `~/.config`——交给 `detect` 从环境变量探，不烙进脚本。手动兜底路径：Chrome(Windows) `%LOCALAPPDATA%\Google\Chrome\User Data\<Profile>\Bookmarks`（Edge 把 `Google\Chrome` 换 `Microsoft\Edge`；macOS 在 `.../Google/Chrome/<Profile>/Bookmarks`、无 `User Data` 层）。本仓 `scripts/test/` 是常驻对比测试案例（原版/修改后两份数据 + 两份预览，见其 README，含隐私不入库）。
+> 原理（"相对死"而非"直接死"）：`Bookmarks` 这个文件名 + `<根>/<Profile>/Bookmarks` 的相对结构是 Chrome 固定契约，用户改不了，故写死合理；唯一会变的是"根"——Windows `%LOCALAPPDATA%`、macOS `~/Library/Application Support`、Linux `~/.config`——交给 `detect` 从环境变量探，不烙进脚本。手动兜底路径：Chrome(Windows) `%LOCALAPPDATA%\Google\Chrome\User Data\<Profile>\Bookmarks`（Edge 把 `Google\Chrome` 换 `Microsoft\Edge`；macOS 在 `.../Google/Chrome/<Profile>/Bookmarks`、无 `User Data` 层）。本仓 `scripts/test/sample/` 是**入库的合成样例**（虚构数据，clone 即有），练手先用它；`scripts/test/` 根下的 `Bookmarks.*` 是真实快照对比案例（含隐私、不入库，见其 README）。
 
 0. **定位 + 体检（GO/NO-GO 闸门）**
    - 定位：`python scripts/bm.py detect`（按 OS 环境变量扫出候选，标"疑似在用"）→ 与用户确认整理哪一个，得到 `<Bookmarks>`。
@@ -25,25 +40,27 @@ version: 1.4.0
 1. **备份底牌**（并把备份路径与还原命令记清告知用户）
    `python scripts/bm.py backup --file "<Bookmarks>"`
    → 生成同目录时间戳底牌 `Bookmarks.backup-<时间>`，打印 `sha256 / url 数量 / restore_cmd`，并追加到 `_backup_manifest.txt`。这是还原底牌，**不等于** Chrome 自动维护的 `Bookmarks.bak`。
+   → `restore_cmd` 里是**绝对路径**（解释器 + 脚本 + 底牌 + 目标），可直接复制给用户在任何目录下粘贴运行。
 
 2. **读取真实结构（地基，不能读错）**
-   `python scripts/bm.py show --file "<Bookmarks>"`
+   `python scripts/bm.py show --file "<Bookmarks>"`（书签多时加 `--depth 2` 或 `--stats` 只看体检）
    → 打印目录树、url 总数、重复 id、重复 URL、是否带 checksum。**把结构呈现给用户、由其确认"对，这就是我现在的书签"** 再往下；地基歪了方案必歪。
+   → 重复 URL 会逐条标注**同目录**（`--dedup` 会并入 1 条）还是**跨目录**（plan 不去重）。**别照着这张表向用户承诺"都给你去重"**——跨目录的那些是保留的。
 
 3. **【循环区 · 绝不碰原文件 · 可反复】** 定/调方案 → 内存重排 → 预览 → 用户再看再提，直到用户**明确拍板"就这版"**：
    - 重排到候选：`python scripts/bm.py plan --file "<Bookmarks>" --out "<候选>" --sort --dedup`（原文件不动；`--sort` 目录优先按名排、`--dedup` 仅在**同目录内**按 url 去重保留最新）
-   - 肉眼核对：`python scripts/bm.py preview --file "<候选>" --base "<Bookmarks>" --out preview.html` → 双击 `preview.html`，顶部看结构、底部看与原版"增/删"差异
+   - 肉眼核对：`python scripts/bm.py preview --file "<候选>" --base "<Bookmarks>" --out preview.html` → 双击 `preview.html`，目录可**点三角折叠**，底部看与原版的差异（**删 / 增 / 移动 / 改名 / 副本减少**）
    - 不满意就换规则/改需求**重跑本步**，这一步没有次数上限。归类规则、哪些删、哪些合并，全部在此与用户确认，**不自作主张删任何一条**。
 
 4. **【唯一动真身 · 未获第 3 步"就这版"前禁止执行】**
    `python scripts/bm.py finalize --from "<候选>" --target "<Bookmarks>"`
-   → 删除顶层 `checksum`（改数据后校验和必失配，删掉 Chrome 会自动重建、不报错）+ 把陈旧 `Bookmarks.bak` 改名 `.stale-*`（防加载时静默回滚）+ 原地写回候选。
+   → 先验候选结构（缺 `roots` / `bookmark_bar|other|synced` 一律拒绝），再删除顶层 `checksum`（改数据后校验和必失配，删掉 Chrome 会自动重建、不报错），把陈旧 `Bookmarks.bak` 改名 `.stale-*`（防加载时静默回滚），最后**原子写回**（先落 `.tmp` 再 `os.replace`，不会留下半个 JSON）。
    → **内置双保险**：finalize 自己会再查一次浏览器进程，在跑就拒绝（除非 `--force`）；写回前自动把当前真身兜一份 `<target>.prescript-<时间>`，即使用户漏了第 1 步也能救；写失败（只读/被占用）给一句人话而非崩栈。
 
 5. **机器校验**
    `python scripts/bm.py verify --file "<Bookmarks>" --before "<第1步底牌>"`
    → 三项：JSON 合法、结构合法（folder 有 `children`、url 有非空 `url`、id 全树唯一）、数量对账（改动前后差额应＝去重数）。
-   → 想逐条看增删：`python scripts/bm.py diff --a "<第1步底牌>" --b "<Bookmarks>"` 列出被删/新增的具体 URL。
+   → 想逐条看变化：`python scripts/bm.py diff --a "<第1步底牌>" --b "<Bookmarks>"`。它是**按「路径+名称+链接」**对账的，所以能区分**真删除 / 真新增 / 移动（换目录）/ 改名 / 副本减少**（同目录去重后少了一份，但链接还在）。**看不到没改动 —— 纯挪目录的场景首行会是「删 0 / 增 0」，要往下看有没有「移动」行。
 
 6. **重开浏览器验收**：结构生效、书签能正常打开。前面对话没退浏览器/没重启验过的都不算数。
 
@@ -51,12 +68,45 @@ version: 1.4.0
    - 不满意 → `python scripts/bm.py restore --backup "<第1步底牌>" --target "<Bookmarks>"` 一键回退到底牌那一刻（**语义不是"只撤销最后一步"**，见 Pitfalls），**回到第 3 步继续循环**。
    - 满意 → 清理 `preview.html`/候选等临时产物；底牌保留一段时间确认稳了再清。
 
+## 仅提示词时怎么做（无 `bm.py` 才走这里）
+
+> 适用：技能被联网加载、只拿到了本文件、当前工作区没有 `scripts/bm.py`。
+> 不适用：明明有脚本却偷懒手改——有脚本必须走上方「步骤」。
+
+同一条 0→7 流程，把脚本动作换成你自己做。**没有闸门替你拦，下列硬约束全部要自己守。** 跟用户先说清：这一模式没有进程探测、没有 sha256 底牌校验、没有 HTML 预览、没有一键 restore；能做的只有先备份、再确认、再写，写坏了用底牌手动盖回去。
+
+**硬约束（缺一条就停）：**
+
+1. 改真身之前，用户必须明确回答「浏览器已完全退出（含托盘）」；没得到这句话不许写。
+2. 改真身之前必须先拷一份同目录时间戳底牌 `Bookmarks.backup-<YYYYMMDD-HHMMSS>`，并把路径告诉用户。
+3. 方案未获用户「就这版」之前，只改副本/候选，不动原文件。
+4. 写回时按这个顺序：再拷一份 `Bookmarks.prescript-<时间>` → **删掉顶层 `checksum`（不要重算）** → 若存在 `Bookmarks.bak` 则改名为 `Bookmarks.bak.stale-<时间>`（防 Chrome 静默回滚）→ 以 **UTF-8 无 BOM** 写回 → 保留 `roots` 里不认识的键（如 `feature_endpoint`），只动 `bookmark_bar` / `other` / `synced`。
+5. 不自作主张删书签；去重只在**同一目录内**按 url 合并（留 `date_added` 最新的那条）；跨目录同链接一律保留。
+6. 不要改 `date_added` 的数值、不要手推 1601 纪元；展示给用户时再换算成日期。
+7. 写回后立刻用 JSON 解析复验：能 parse、每个 folder 有 `children`、每个 url 有非空 `url`、全树 `id` 唯一、条数对得上方案。失败则用底牌盖回。
+8. 路径从「步骤」里的手动兜底路径推断或问用户，**不要编造** `C:\Users\某名\...`。多 Profile 必须让用户挑，不许猜 Default。
+
+**步骤对照：**
+
+0. **定位 + 体检**：按手动兜底路径列出候选（看文件是否存在、修改时间），请用户确认整理哪一个；确认可读写、是合法 JSON；**开口确认浏览器已退出**。任何一项不行就停。
+1. **备份**：复制原文件为 `Bookmarks.backup-<时间>`，告知路径。
+2. **读结构**：解析 JSON，把目录树、url 总数、重复 URL、有无 checksum 呈现给用户，得到「对，这就是我现在的书签」。
+3. **循环区**：在候选副本上改名/移动/排序/同目录去重；每次把新结构讲清楚，用户说不满意就继续改候选。
+4. **写回**：用户拍板后按硬约束第 4 条写回。这是唯一动真身的一步。
+5. **复验**：按硬约束第 7 条。
+6. **验收**：请用户重启浏览器肉眼核对。
+7. **定夺**：不满意 → 用底牌覆盖真身，回到第 3 步；满意 → 清候选，底牌留一阵。
+
 ## Pitfalls
 
-- **第 3 步是循环，不是直线**：AI 不得按字面顺序一路冲到写回。没拿到用户明确的"就这版"，绝不执行第 4 步 `finalize`。
-- 浏览器没退干净 = 白改（退出时被内存旧数据覆盖，最常见失败原因）。**现由 `preflight`/`finalize` 自动拦截**（检测到 chrome/edge 等在跑即拒绝）；确已退出仍被拦才用 `--force`，平时别拿它绕闸。
+- **先判定用法**：有 `bm.py` 走脚本步骤；没有就走「仅提示词时怎么做」。不要混用。
+- **第 3 步是循环，不是直线**：AI 不得按字面顺序一路冲到写回。没拿到用户明确的"就这版"，绝不执行第 4 步（脚本的 `finalize` / 仅提示词的写回）。
+- 浏览器没退干净 = 白改（退出时被内存旧数据覆盖，最常见失败原因）。脚本模式由 `preflight`/`finalize` 自动拦截（检测到 chrome/edge 等在跑即拒绝；确已退出仍被拦才用 `--force`，平时别拿它绕闸）。**仅提示词模式没有进程探测**——必须问出口并等到肯定答复。
 - **动手前先 `preflight`**：它给 GO/NO-GO；NO-GO（文件缺失/损坏/只读/浏览器在跑）一律先解决再往下，别硬跑 backup/finalize。
 - 目标文件**只读或被占用**时，`preflight` 会标"不可写"、`finalize` 写失败给一句人话并保留自动兜底件，不会把真身写坏。
+- **`finalize` 会先验候选再写**：候选缺 `roots` 或三个根之一就拒绝，绝不会把一份非书签 JSON 盖到真身上。写回走 `.tmp` + `os.replace`，中途失败不留半个文件。
+- **`show` 报的重复 URL 是全树的，但 `plan --dedup` 只合并同目录的**。看到"跨目录"标注时，别向用户承诺会去重。
+- **`restore` 也有安全闸**：浏览器在跑会被拒绝（确已退出才 `--force`），写前还会兜一份 `prerestore`。它和 `finalize` 是同级危险操作，不要当成"安全的只读命令"。
 - **路径不写死**：靠 `detect` 从 OS 环境变量解析（跨 Win/mac/Linux、换用户名）；用户用 `--user-data-dir` 挪过位置就 `detect --root`，或任何命令直接传 `--file`。绝不把 `C:\Users\某名\...` 烙进脚本或文档。
 - **自建底牌 ≠ `Bookmarks.bak`**：后者是 Chrome 自动备份，改数据若有瑕疵时会被用来**静默回滚**，让你以为改的东西丢了；`finalize` 已主动把它改名，别手动恢复它。
 - checksum 不要试图重算，删字段最稳（`finalize` 已代劳）。
@@ -68,6 +118,6 @@ version: 1.4.0
 
 ## Verification
 
-- 第 5 步 `verify` 三项全绿，且 `--before` 对账差额＝预期去重数。
+- 脚本模式：第 5 步 `verify` 三项全绿，且 `--before` 对账差额＝预期去重数。仅提示词：硬约束第 7 条复验通过。
 - 用户重启 Chrome/Edge 后结构生效、链接可点。
-- 改真实数据前，先在 `scripts/test/`（对比案例）上把 `preflight→backup→show→plan→preview→finalize→verify→diff→restore` 整条跑一遍，确认手感再上。
+- 脚本模式改真实数据前，先在 `scripts/test/sample/`（入库的虚构样例，18 条）上把 `preflight→backup→show→plan→preview→finalize→verify→diff→restore` 整条跑一遍、确认手感再上；`sample/README.md` 里写了每步的预期输出。想用更接近真实的结构，再用本地那份含隐私的快照。仅提示词没有这份靶场，更要先备份、先问「退浏览器了吗」。

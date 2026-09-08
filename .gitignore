@@ -1,7 +1,19 @@
-# Python
+# scripts/test/ 默认是【真实浏览器书签快照】，含隐私 → 一律不入库、不外推。
+# 但下面两类必须放行，否则别人 clone 之后仓库里一份能练手的靶子都没有：
+#   - test/README.md  目录说明
+#   - test/sample/    纯虚构合成样例（零隐私）
+# 注意：git 无法在「父目录被排除」的情况下重新纳入子文件，
+# 所以这里先把 sample 目录本身放行，再放行其中的内容。
+scripts/test/**
+!scripts/test/README.md
+!scripts/test/sample/
+!scripts/test/sample/**
+
+# 下面的规则放在最后（后写的优先级更高），确保连 sample 内部也不会漏进去
 __pycache__/
 *.pyc
+*.pyo
 
-# scripts/test/ 是【真实浏览器书签裁剪快照】，含隐私 → 绝不入库、绝不外推。
-# 将来换成彻底脱敏/虚构数据后，可删除下面这行、纳入仓库当公开样例。
-scripts/test/
+# preview 生成的临时网页（随时可用 preview 命令重造）
+*.preview.html
+preview-*.html

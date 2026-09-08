@@ -10,136 +10,100 @@ generate_workflow.py — 生成 docs/workflow.svg（0→7 带循环主流程示�
       3) 只有 finalize 一步真正写回；不满意走 restore 回到底牌那一刻，再回到循环区。
 
 依赖：
-    仅 Python 标准库，无第三方依赖（与 scripts/bm.py 同一约定）。
+    仅 Python 标准库 + 同目录 theme.py（共享配色 / 字体 / 明暗自适应）。
 
 运行方式：
     python scripts/visualization/generate_workflow.py
 
 输出路径：
-    docs/workflow.svg（自动创建 docs/ 目录）
+    docs/workflow.svg 与  project_overview/assets/workflow.svg（同一份内容，双写）
 
 维护说明：
-    改文案/配色/布局请改本脚本后重跑，不要手改 SVG。
+    改文案/配色/布局请改本脚本（或 theme.py）后重跑，不要手改 SVG。
 """
-import html
-import os
-import pathlib
+from theme import box, chip, line, note, path as svg_path, section_label, svg_doc, write_outputs
 
-# ---------- 画布 ----------
-W, H = 1200, 640
-OUT = pathlib.Path(__file__).resolve().parents[2] / "docs" / "workflow.svg"
+W, H = 1200, 700
 
-# ---------- 配色 ----------
-C_PREP = "#eef2ff"          # 只读准备：indigo-50
-C_PREP_S = "#4f46e5"
-C_PREP_T = "#312e81"
-C_LOOP_BG = "#fffbeb"       # 循环区：amber-50
-C_LOOP_S = "#f59e0b"
-C_LOOP_T = "#b45309"
-C_WRITE_BG = "#fee2e2"      # 唯一写回：red-100
-C_WRITE_S = "#dc2626"
-C_WRITE_T = "#7f1d1d"
-C_VERIFY_BG = "#ecfdf5"     # 校验验收：emerald-50
-C_VERIFY_S = "#10b981"
-C_VERIFY_T = "#065f46"
-C_RESTORE_S = "#e11d48"     # restore 回环
-C_ARROW = "#94a3b8"
-C_CMD = "#0f172a"
-C_DESC = "#475569"
-C_CARD = "#ffffff"
-
-
-def esc(s):
-    return html.escape(s, quote=True)
-
-
-def chip(cx, y_center, w, title, desc, bg, stroke, title_color):
-    """宽高 60 的双行信息块；cx 为中心 x。"""
-    x0 = cx - w / 2
-    return f'''<g>
-  <rect x="{x0:.1f}" y="{y_center - 30}" width="{w}" height="60" rx="10" fill="{bg}" stroke="{stroke}" stroke-width="1.5"/>
-  <text x="{cx}" y="{y_center - 2}" text-anchor="middle" font-size="14.5" font-weight="700" fill="{title_color}">{esc(title)}</text>
-  <text x="{cx}" y="{y_center + 17}" text-anchor="middle" font-size="11" fill="{C_DESC}">{esc(desc)}</text>
-</g>'''
-
-
-def line(x1, y1, x2, y2, color=C_ARROW, width=2, dash=None, marker="arw"):
-    d = f' stroke-dasharray="{dash}"' if dash else ""
-    return (f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{color}" '
-            f'stroke-width="{width}"{d} marker-end="url(#{marker})"/>')
-
-
-def polyline(pts, color, width=2, dash="7 5", marker=None):
-    m = f' marker-end="url(#{marker})"' if marker else ""
-    return (f'<polyline points="{pts}" fill="none" stroke="{color}" '
-            f'stroke-width="{width}" stroke-dasharray="{dash}"{m}/>')
+# 循环区外框
+LOOP = (111, 210, 978, 150)
+# 写回 / 校验 行
+ROW3_Y = 440
+# restore 回环框
+RES = (600, 530, 560, 110)
 
 
 def body():
-    parts = []
-    a = parts.append
+    p = []
+    a = p.append
 
-    # ============ 第 1 行：准备段（只读） ============
-    a('<text x="150" y="58" font-size="12.5" font-weight="600" fill="#64748b">① 定位 · 底牌 · 读结构（全程只读）</text>')
-    a(chip(225, 108, 150, "detect", "按 OS 定位 Bookmarks", C_PREP, C_PREP_S, C_PREP_T))
-    a(line(305, 108, 326, 108))
-    a(chip(415, 108, 180, "preflight", "体检 → GO / NO-GO", C_PREP, C_PREP_S, C_PREP_T))
-    a(line(510, 108, 531, 108))
-    a(chip(610, 108, 150, "backup", "底牌 + sha256 + 还原命令", C_PREP, C_PREP_S, C_PREP_T))
-    a(line(690, 108, 711, 108))
-    a(chip(795, 108, 150, "show", "读结构 · 逐条标重复", C_PREP, C_PREP_S, C_PREP_T))
+    # ---------- 标题 ----------
+    a(note(60, 46, "0→7 主流程：带循环，只有一个写入口", tone="tx", size=19, weight=800))
+    a(note(60, 70, "准备段只读 → 循环区反复确认（不碰真身）→ 拍板后唯一写回 → 校验验收 → 不满意回底牌",
+           tone="dim", size=12.5, weight=500))
 
-    # show → 进入循环区
-    a(line(795, 140, 795, 181))
+    # ---------- ① 准备段（只读） ----------
+    a(section_label(60, 108, "①", "定位 · 体检 · 底牌 · 读结构（全程只读）", tone="blue"))
+    cw, gap = 210, 46
+    x0 = (W - (4 * cw + 3 * gap)) / 2
+    centers = [x0 + cw / 2 + i * (cw + gap) for i in range(4)]
+    a(chip(centers[0], 150, cw, 64, "detect", "按 OS 环境变量定位 Bookmarks", "blue"))
+    a(line(centers[0] + cw / 2, 150, centers[1] - cw / 2 - 4, 150))
+    a(chip(centers[1], 150, cw, 64, "preflight", "体检 → GO / NO-GO", "blue"))
+    a(line(centers[1] + cw / 2, 150, centers[2] - cw / 2 - 4, 150))
+    a(chip(centers[2], 150, cw, 64, "backup", "时间戳底牌 + sha256 + 还原命令", "blue"))
+    a(line(centers[2] + cw / 2, 150, centers[3] - cw / 2 - 4, 150))
+    a(chip(centers[3], 150, cw, 64, "show", "读结构 · 逐条标重复（同/跨目录）", "blue"))
 
-    # ============ 循环区 ============
-    a(f'<rect x="40" y="190" width="1040" height="150" rx="16" fill="{C_LOOP_BG}" stroke="{C_LOOP_S}" stroke-width="1.6" stroke-dasharray="8 5"/>')
-    a(f'<text x="560" y="219" text-anchor="middle" font-size="14.5" font-weight="700" fill="{C_LOOP_T}">② 循环区 · 改到满意才放行（全程不写原文件）</text>')
-    a(chip(255, 275, 175, "plan", "重排 → 候选文件", "#ffffff", C_LOOP_S, C_LOOP_T))
-    a(chip(625, 275, 195, "preview", "渲染本地 HTML 肉眼核对", "#ffffff", C_LOOP_S, C_LOOP_T))
-    a(f'<text x="470" y="264" text-anchor="middle" font-size="24" font-weight="700" fill="{C_LOOP_S}">⇄</text>')
-    a(f'<text x="470" y="300" text-anchor="middle" font-size="11" fill="{C_DESC}">与用户反复确认</text>')
+    # show → 循环区
+    a(line(centers[3], 182, centers[3], LOOP[1] - 4))
 
-    # 用户拍板 → finalize
-    a(line(405, 340, 405, 372, color=C_VERIFY_S))
-    a(f'<text x="500" y="364" font-size="11.5" fill="{C_VERIFY_S}">用户拍板「就这版」↓</text>')
+    # ---------- ② 循环区 ----------
+    a(box(*LOOP, tone="yellow", fill="yellow-bg", dash="8 5", radius=16))
+    a(note(LOOP[0] + 26, LOOP[1] + 32, "② 循环区 · 改到满意才放行（全程不写原文件）",
+           tone="yellow", size=14, weight=800))
+    a(chip(420, 300, 240, 64, "plan", "--sort / --dedup → 候选文件", "yellow"))
+    a(chip(790, 300, 260, 64, "preview", "渲染本地 HTML 肉眼核对", "yellow"))
+    a(note(600, 296, "⇄", tone="yellow", size=22, weight=800, anchor="middle"))
+    a(note(600, 320, "与用户反复确认", tone="dim", size=11, anchor="middle"))
 
-    # ============ 第 3 行：唯一写回 + 校验验收 ============
-    a(f'<text x="150" y="425" font-size="12.5" font-weight="600" fill="#64748b">③ 写回 · 校验 · 验收</text>')
-    a(chip(405, 410, 205, "finalize", "唯一写回 · 原子替换 · 自动兜底", C_WRITE_BG, C_WRITE_S, C_WRITE_T))
-    a(line(510, 410, 568, 410))
-    a(chip(668, 410, 195, "verify / diff", "结构 · 数量 · 变更分类对账", C_VERIFY_BG, C_VERIFY_S, C_VERIFY_T))
-    a(line(770, 410, 818, 410))
-    a(chip(920, 410, 200, "重启浏览器验收", "肉眼确认新结构生效", C_VERIFY_BG, C_VERIFY_S, C_VERIFY_T))
+    # ---------- 拍板 → 写回 ----------
+    a(line(600, LOOP[1] + LOOP[3], 600, ROW3_Y - 42, tone="red", width=2.2))
+    a(note(614, ROW3_Y - 52, "用户拍板「就这版」↓", tone="red", size=12, weight=700))
 
-    # ============ restore：回到底牌 → 回到循环区 ============
-    a(line(920, 442, 920, 497, color=C_RESTORE_S))
-    a(f'<rect x="560" y="505" width="600" height="90" rx="14" fill="#fff1f2" stroke="{C_RESTORE_S}" stroke-width="1.6" stroke-dasharray="8 5"/>')
-    a(f'<text x="860" y="536" text-anchor="middle" font-size="14" font-weight="700" fill="#be123c">不满意 → restore 一键还原</text>')
-    a(f'<text x="860" y="562" text-anchor="middle" font-size="12.5" fill="#9f1239">回退到底牌那一刻；回到 ② 循环区，换规则重新 plan / preview</text>')
-    # 卡片右上角沿右侧空档绕回循环区底部
-    a(polyline("1120,505 1120,430 990,346", C_RESTORE_S, width=2, dash="7 5", marker="arw-red"))
+    # ---------- ③ 写回 · 校验 · 验收 ----------
+    a(section_label(196, ROW3_Y - 48, "③", "写回 · 校验 · 验收", tone="red"))
+    rw, rgap = 250, 44
+    rx0 = (W - (3 * rw + 2 * rgap)) / 2
+    rcenters = [rx0 + rw / 2 + i * (rw + rgap) for i in range(3)]
+    a(chip(rcenters[0], ROW3_Y, rw, 70, "finalize", "唯一写回 · 原子替换 · 自动兜底", "red", badge="唯一写入口"))
+    a(line(rcenters[0] + rw / 2, ROW3_Y, rcenters[1] - rw / 2 - 4, ROW3_Y, tone="green"))
+    a(chip(rcenters[1], ROW3_Y, rw, 70, "verify / diff", "结构 · 数量 · 变更分类对账", "green"))
+    a(line(rcenters[1] + rw / 2, ROW3_Y, rcenters[2] - rw / 2 - 4, ROW3_Y, tone="green"))
+    a(chip(rcenters[2], ROW3_Y, rw, 70, "重启浏览器验收", "肉眼确认新结构生效", "green"))
 
-    return "\n".join(parts)
+    # ---------- restore 回环 ----------
+    a(line(rcenters[2], ROW3_Y + 35, rcenters[2], RES[1] - 4, tone="red"))
+    a(box(*RES, tone="red", fill="red-bg", dash="8 5", radius=14))
+    a(note(RES[0] + RES[2] / 2, RES[1] + 34, "不满意 → restore 一键还原",
+           tone="red", size=15, weight=800, anchor="middle"))
+    a(note(RES[0] + RES[2] / 2, RES[1] + 60, "回退到底牌那一刻，回到 ② 循环区换规则重来",
+           tone="dim", size=12.5, anchor="middle"))
+    a(note(RES[0] + RES[2] / 2, RES[1] + 86, "与 finalize 同级安全闸：浏览器在跑拒绝 · 覆盖前先校验底牌",
+           tone="dim2", size=11, anchor="middle"))
+    # 沿右侧空档绕回循环区
+    a(svg_path("M1170,585 L1170,320 L1092,320", tone="red", dash="7 5", marker="arw-red", width=2))
+
+    # ---------- 底部图例 ----------
+    a(note(60, 678, "虚线框 = 循环 / 回退路径　·　红 = 会真正改动文件的操作　·　绿 = 校验与验收　·　蓝 = 只读准备",
+           tone="dim2", size=11.5, weight=500))
+
+    return "\n".join(p)
 
 
 def render():
-    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" font-family="'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif">
-  <defs>
-    <marker id="arw" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="{C_ARROW}"/>
-    </marker>
-    <marker id="arw-red" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="{C_RESTORE_S}"/>
-    </marker>
-  </defs>
-  <rect x="0" y="0" width="{W}" height="{H}" fill="#ffffff"/>
-{body()}
-</svg>
-'''
-    OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_text(svg, encoding="utf-8", newline="\n")
-    print(f"written: {OUT} ({os.path.getsize(OUT)} bytes)")
+    svg = svg_doc(W, H, body(), title="0→7 带循环主流程")
+    write_outputs("workflow.svg", svg)
 
 
 if __name__ == "__main__":

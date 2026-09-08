@@ -160,6 +160,36 @@ python scripts/bm.py verify    --file "<Bookmarks>" --before "<底牌>"
 
 ## 8. 变更日志
 
+- 2026-09-08 v1.14.4：**README 排版系统重构（纯展示层，内容一字未删；行为零变化）**。
+  - **根因**：旧 README 的「整理前/后」用 ASCII 字符画做双栏对比——中文是全角、制表符是半角，在 GitHub 上必然错位；加上大段平铺文字、FAQ 全展开，整体「信息密、层次平」。
+  - **改造手段全部走 GitHub 原生支持的能力**（不引入任何依赖、不用 `style` 属性——GitHub 会剥离）：
+    - 顶部居中 Hero：标题 + 定位 + 6 枚统一 `flat-square` 徽章（version / CI / license / dependencies / tests / pages，色板沿用 theme.py 的 Chrome 四色）+ 一条快速导航行。
+    - 三栏目录（`<table>` + `<a href="#锚点">`），锚点按 GitHub slug 规则手算校验（emoji 与全角标点会被剥离，空格转 `-`）。
+    - **ASCII 对比块 → HTML 双栏表格**：对齐交给浏览器，中文永不崩；缩进用 `&nbsp;`，次要信息用 `<sub>`。
+    - 0→7 流程从 ASCII 块压成一行居中步进条（`<p align="center">`），细节交给 `workflow.svg`。
+    - 告警块统一为 GitHub 原生 `> [!IMPORTANT]` / `[!WARNING]` / `[!CAUTION]` / `[!NOTE]` 四种语义（原来自造的 `> ⚠`）。
+    - 长内容折叠：FAQ 8 问、仓库结构（主表 + `scripts/visualization/` 内部）、快速上手三条路，全部改 `<details>`，首屏噪音大减。
+    - 命令速查表加 🔒 只读 / ✍️ 写 标记列；安全设计改成 6 行图标表格；最近更新改成「版本 + 说明」两列表格。
+  - **踩坑记录（下次改 README 必看）**：
+    1. GitHub 的 HTML block 内**不解析 markdown**——`<table>` / `<td>` / `<sub>` / `<summary>` 里写 `**粗体**`、`` `code` ``、`[x](y)` 会原样显示为源码；必须用 `<b>` / `<code>` / `<a>`。
+    2. HTML block 结束于**空行**，所以 `<td>` 内不要留空行，否则块被切断、渲染错乱。
+    3. `<https://...>` autolink 在 HTML block 内会被当标签**吞掉**，要写成 `<a href="...">`。
+    4. 预览面板会给源文件注入 `data-page-node-id`（本次累计剔除 4.3 万字符），`sync_pages.py` 已自动剔除，但改源文件前最好先清一遍。
+  - **徽章规格全仓统一**（lpk 截图反馈「小细节要保持一致」）：同一概念此前有三种形态——页面 Tab 的「默认」是浅绿底 5px 圆角、三档卡片 `lv-badge.hot` 是实心绿胶囊、README 是纯灰色小字。统一后全仓只有一套规格：**胶囊（999px）· 11px · 700**；「默认 / 推荐」类最高强调 = 实心绿白字 + 投影（与 SVG `chip()` 徽章同款），中性状态 = 灰底灰字，语义状态 = 浅色底语义色字。改动点：`.tab-btn em`（加 `.em-hot`，不再随激活整体变绿）、`.step-tag` 胶囊化、README 三条路表格与快速上手 `<summary>` 的 `<sub>` 文字 → shields 徽章（同文案同色系：默认·推荐 `34a853` / 无脚本降级 `94a3b8` / 零安装 `f5a623`，与页面 Tab 逐字一致）。
+  - SKILL.md frontmatter 补齐 registry 要求字段：`license: MIT`（规范必填，SPDX）、`compatibility: claude-code`（**诚实填写**——只列真正实测过的客户端，macOS/Linux 的 `detect` 分支未实测前不扩大）、`allowed-tools: Bash Read Write Edit`。
+  - 版本同步：SKILL frontmatter / README / 全景观览页 / charts.js 四处 1.14.3 → 1.14.4；54 项回归通过、不增删。
+- 2026-09-08 v1.14.3：**展示资产统一换肤 —— 抽共享主题 theme.py，两张示意图重绘 + 新增社交卡片**（展示层改动，行为零变化）。
+  - 新增 `scripts/visualization/theme.py` 作为**唯一视觉真源**：Chrome 四色（蓝/绿/黄/红 + 紫）语义色板、Inter / JetBrains Mono 字体栈、**明暗自适应**（元素同时写浅色 presentation attribute + 语义 class，SVG 内嵌 `@media (prefers-color-scheme: dark)` 覆盖，GitHub 深色模式自动换肤，样式被剥离也只是退回浅色版）、通用绘制件（chip / box / 箭头 / 阶段标签 / 多色 marker / 双写输出）。
+  - 按同一套语言重绘 `docs/workflow.svg`（1200×700：① 准备段只读 → ② 循环区 ⇄ → ③ 唯一写回·校验·验收 → restore 回环，含"唯一写入口"徽章与底部图例）与 `docs/deliverables.svg`（1200×620：三档卡片 + 顶部色条 + 徽章 + 勾选列表 + 底部判定条）。两张图**双写**到 `project_overview/assets/`，站点与 README 共用同一份。
+  - 新增 `generate_social_preview.py` → `docs/social-preview.svg`（1280×640 固定深色：标题 / 定位 / 指标 pill / 右侧整理后书签栏示意 / 底部命令线与仓库地址）。用途见脚本 docstring（Settings → Social preview 上传）。
+  - 全景观览页「03 架构」章新增示意图折叠区（`<details>`），直接引用 `assets/*.svg`，页面与 README 同源。
+  - README：最近更新追加 v1.14.3；仓库结构重写 `scripts/visualization/`（theme.py + 三个生成脚本 + sync）与 `docs/`（含 social-preview）说明。
+  - 版本同步：SKILL frontmatter 1.14.2 → 1.14.3；54 项回归不增删。
+- 2026-09-08 v1.14.2：**项目全景观览站重写 + Pages 部署同步脚本化**（展示层改动，行为零变化）。
+  - 重写 `project_overview/` 为多文件结构（`index.html` / `style.css` / `script.js` / `charts.js` / `assets/`），11 个章节：为什么 / 三份交付物 / 架构全景 / 0→7 流程 / 安全护栏 / 命令速查 / 快速开始 / 测试质量 / 仓库结构 / 已知边界 / 文档索引。深浅色双主题、内联 SVG 架构图与流程图（节点悬停 tooltip）、Chart.js 回归增长曲线 + 样例归类分布图、可折叠目录树、命令一键复制。旧版单页与附属页 `docs/project_card.html` 已移除。
+  - 新增 `scripts/visualization/sync_pages.py`：把 `project_overview/` 同步成 `docs/` 部署副本（自动建 `.nojekyll`、提示"源目录已移除但 docs/ 仍在"的旧文件），取代手工 cp，避免漏文件。
+  - README：徽章区新增 版本 / 回归 54 项 / 零第三方依赖 三枚；新增 FAQ（8 问：关浏览器、改完没变、云端同步、restore 语义、不 clone 能否用、支持哪些浏览器、能否判失效、为何三份交付物）；新增「最近更新」「作者」两节；仓库结构补 `sync_pages.py` 与新站点说明。
+  - 版本同步：SKILL frontmatter 1.14.1 → 1.14.2；54 项回归不增删。
 - 2026-09-08 v1.14.1：**GitHub Pages 在线部署——全景观览站上线，skill 源码不裸露**。
   - 新增 `.github/workflows/pages.yml`：push main（或手动 dispatch）后自动把 `project_overview/` 整体作为**站点根**发布到 GitHub Pages（`configure-pages@v5` + `upload-pages-artifact@v3` + `deploy-pages@v4`），站点内仅含全景观览页，`SKILL.md`/`PROMPT.md`/`scripts/` 等源码不随站点暴露。首次需在仓库 Settings → Pages → Source 选 **GitHub Actions**（一次性），之后 `https://LPK3215.github.io/chrome-bookmarks-organize/` 即全景观览首页。
   - 站内 6 处 `../*.md` 文档索引卡链接改为 GitHub `blob/main` 绝对链接（原相对链接在"目录成站点根"后会指向站外 404）；README 徽章区新增 Pages 入口徽章，仓库结构补 `project_overview/` 说明。

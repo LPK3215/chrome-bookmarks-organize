@@ -1,7 +1,10 @@
 ---
 name: chrome-bookmarks-organize
 description: AI 整理浏览器书签栏 / 收藏夹（Chrome、Edge）：把乱糟糟的书签栏自动重排目录、改名、去重、排序、清理失效链接，让 AI 按内容把"到处乱存"的书签归进文件夹。直接编辑 Chrome/Edge 的 Bookmarks JSON 文件，完全绕开"导出 HTML → 导入"的重复追加问题。用户说"整理书签/收藏夹/书签栏"、"书签太乱了帮我归类"、"清理重复书签"、"浏览器书签整理"时使用。
-version: 1.14.1
+license: MIT
+compatibility: claude-code
+allowed-tools: Bash Read Write Edit
+version: 1.14.4
 ---
 
 # Chrome 书签直改整理

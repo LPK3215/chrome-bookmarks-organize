@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" font-family="'Inter', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif">
+  <title>chrome-bookmarks-organize · AI 整理浏览器书签</title>
+  <defs>
+    <radialGradient id="glowBlue" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#4285f4" stop-opacity="0.42"/><stop offset="1" stop-color="#4285f4" stop-opacity="0"/></radialGradient>
+    <radialGradient id="glowGreen" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#34a853" stop-opacity="0.34"/><stop offset="1" stop-color="#34a853" stop-opacity="0"/></radialGradient>
+    <radialGradient id="glowPurple" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#8b5cf6" stop-opacity="0.30"/><stop offset="1" stop-color="#8b5cf6" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect x="0" y="0" width="1280" height="640" fill="#0a0f1a"/>
+  <circle cx="120" cy="80" r="420" fill="url(#glowBlue)"/>
+  <circle cx="1180" cy="40" r="380" fill="url(#glowGreen)"/>
+  <circle cx="760" cy="620" r="360" fill="url(#glowPurple)"/>
+  <g opacity="0.06" stroke="#e9eefb" stroke-width="1">
+    <line x1="0" y1="0" x2="0" y2="640"/>
+    <line x1="64" y1="0" x2="64" y2="640"/>
+    <line x1="128" y1="0" x2="128" y2="640"/>
+    <line x1="192" y1="0" x2="192" y2="640"/>
+    <line x1="256" y1="0" x2="256" y2="640"/>
+    <line x1="320" y1="0" x2="320" y2="640"/>
+    <line x1="384" y1="0" x2="384" y2="640"/>
+    <line x1="448" y1="0" x2="448" y2="640"/>
+    <line x1="512" y1="0" x2="512" y2="640"/>
+    <line x1="576" y1="0" x2="576" y2="640"/>
+    <line x1="640" y1="0" x2="640" y2="640"/>
+    <line x1="704" y1="0" x2="704" y2="640"/>
+    <line x1="768" y1="0" x2="768" y2="640"/>
+    <line x1="832" y1="0" x2="832" y2="640"/>
+    <line x1="896" y1="0" x2="896" y2="640"/>
+    <line x1="960" y1="0" x2="960" y2="640"/>
+    <line x1="1024" y1="0" x2="1024" y2="640"/>
+    <line x1="1088" y1="0" x2="1088" y2="640"/>
+    <line x1="1152" y1="0" x2="1152" y2="640"/>
+    <line x1="1216" y1="0" x2="1216" y2="640"/>
+    <line x1="1280" y1="0" x2="1280" y2="640"/>
+    <line x1="0" y1="0" x2="1280" y2="0"/>
+    <line x1="0" y1="64" x2="1280" y2="64"/>
+    <line x1="0" y1="128" x2="1280" y2="128"/>
+    <line x1="0" y1="192" x2="1280" y2="192"/>
+    <line x1="0" y1="256" x2="1280" y2="256"/>
+    <line x1="0" y1="320" x2="1280" y2="320"/>
+    <line x1="0" y1="384" x2="1280" y2="384"/>
+    <line x1="0" y1="448" x2="1280" y2="448"/>
+    <line x1="0" y1="512" x2="1280" y2="512"/>
+    <line x1="0" y1="576" x2="1280" y2="576"/>
+    <line x1="0" y1="640" x2="1280" y2="640"/>
+  </g>
+  <rect x="72" y="96" width="330" height="34" rx="17" fill="#34a853" opacity="0.16"/>
+  <circle cx="94" cy="113" r="5" fill="#34a853"/>
+  <text x="110" y="119" font-size="14.5" font-weight="700" fill="#34a853">Agent Skills · MIT · 零第三方依赖</text>
+  <text x="72" y="214" font-size="44" font-weight="900" fill="#e9eefb" letter-spacing="-1">chrome-bookmarks-organize</text>
+  <text x="72" y="272" font-size="30" font-weight="800" fill="#4285f4">AI 整理浏览器书签 · 直改 JSON</text>
+  <text x="72" y="330" font-size="21" fill="#93a5c2">绕开「导出 HTML → 导入」的追加地狱</text>
+  <text x="72" y="366" font-size="21" fill="#93a5c2">一段提示词打底，一份脚本保底 —— 默认用脚本跑</text>
+  <rect x="72" y="426" width="212" height="60" rx="14" fill="#101a2c" stroke="#25344f"/>
+  <text x="92" y="462" font-size="26" font-weight="900" fill="#4285f4" font-family="'JetBrains Mono', 'SFMono-Regular', Consolas, 'Microsoft YaHei Mono', monospace">10</text>
+  <text x="134" y="461" font-size="15" font-weight="600" fill="#93a5c2">bm.py 子命令</text>
+  <rect x="300" y="426" width="186" height="60" rx="14" fill="#101a2c" stroke="#25344f"/>
+  <text x="320" y="462" font-size="26" font-weight="900" fill="#4285f4" font-family="'JetBrains Mono', 'SFMono-Regular', Consolas, 'Microsoft YaHei Mono', monospace">54</text>
+  <text x="362" y="461" font-size="15" font-weight="600" fill="#93a5c2">项回归护栏</text>
+  <rect x="502" y="426" width="186" height="60" rx="14" fill="#101a2c" stroke="#25344f"/>
+  <text x="522" y="462" font-size="26" font-weight="900" fill="#4285f4" font-family="'JetBrains Mono', 'SFMono-Regular', Consolas, 'Microsoft YaHei Mono', monospace">0</text>
+  <text x="548" y="461" font-size="15" font-weight="600" fill="#93a5c2">第三方依赖</text>
+  <rect x="792" y="128" width="416" height="400" rx="18" fill="#101a2c" stroke="#25344f" stroke-width="1.5"/>
+  <path d="M792 146 a18 18 0 0 1 18 -18 h380 a18 18 0 0 1 18 18 v38 h-416 z" fill="#16223a"/>
+  <circle cx="816" cy="147" r="6" fill="#ea4335"/>
+  <circle cx="836" cy="147" r="6" fill="#f5a623"/>
+  <circle cx="856" cy="147" r="6" fill="#34a853"/>
+  <text x="1000.0" y="153" text-anchor="middle" font-size="13" fill="#93a5c2" font-family="'JetBrains Mono', 'SFMono-Regular', Consolas, 'Microsoft YaHei Mono', monospace">chrome://bookmarks</text>
+  <rect x="816" y="210" width="368" height="36" rx="9" fill="#16223a"/>
+  <rect x="830" y="222" width="12" height="12" rx="3" fill="#ea4335"/>
+  <text x="854" y="234" font-size="15" font-weight="600" fill="#e9eefb">购物</text>
+  <text x="1168" y="234" text-anchor="end" font-size="12.5" fill="#93a5c2" font-family="'JetBrains Mono', 'SFMono-Regular', Consolas, 'Microsoft YaHei Mono', monospace">6</text>
+  <rect x="816" y="252" width="368" height="36" rx="9" fill="#16223a"/>
+  <rect x="830" y="264" width="12" height="12" rx="3" fill="#4285f4"/>
+  <text x="854" y="276" font-size="15" font-weight="600" fill="#e9eefb">新闻资讯</text>
+  <text x="1168" y="276" text-anchor="end" font-size="12.5" fill="#93a5c2" font-family="'JetBrains Mono', 'SFMono-Regular', Consolas, 'Microsoft YaHei Mono', monospace">6</text>
+  <rect x="816" y="294" width="368" height="36" rx="9" fill="#16223a"/>
+  <rect x="830" y="306" width="12" height="12" rx="3" fill="#34a853"/>
+  <text x="854" y="318" font-size="15" font-weight="600" fill="#e9eefb">技术开发</text>
+  <text x="1168" y="318" text-anchor="end" font-size="12.5" fill="#93a5c2" font-family="'JetBrains Mono', 'SFMono-Regular', Consolas, 'Microsoft YaHei Mono', monospace">6</text>
+  <rect x="816" y="336" width="368" height="36" rx="9" fill="#16223a"/>
+  <rect x="830" y="348" width="12" height="12" rx="3" fill="#f5a623"/>
+  <text x="854" y="360" font-size="15" font-weight="600" fill="#e9eefb">学习资源</text>
+  <text x="1168" y="360" text-anchor="end" font-size="12.5" fill="#93a5c2" font-family="'JetBrains Mono', 'SFMono-Regular', Consolas, 'Microsoft YaHei Mono', monospace">6</text>
+  <rect x="816" y="378" width="368" height="36" rx="9" fill="#16223a"/>
+  <rect x="830" y="390" width="12" height="12" rx="3" fill="#8b5cf6"/>
+  <text x="854" y="402" font-size="15" font-weight="600" fill="#e9eefb">视频娱乐</text>
+  <text x="1168" y="402" text-anchor="end" font-size="12.5" fill="#93a5c2" font-family="'JetBrains Mono', 'SFMono-Regular', Consolas, 'Microsoft YaHei Mono', monospace">6</text>
+  <rect x="816" y="420" width="368" height="36" rx="9" fill="#16223a"/>
+  <rect x="830" y="432" width="12" height="12" rx="3" fill="#4285f4"/>
+  <text x="854" y="444" font-size="15" font-weight="600" fill="#e9eefb">生活工具</text>
+  <text x="1168" y="444" text-anchor="end" font-size="12.5" fill="#93a5c2" font-family="'JetBrains Mono', 'SFMono-Regular', Consolas, 'Microsoft YaHei Mono', monospace">6</text>
+  <rect x="816" y="462" width="368" height="36" rx="9" fill="#16223a"/>
+  <rect x="830" y="474" width="12" height="12" rx="3" fill="#34a853"/>
+  <text x="854" y="486" font-size="15" font-weight="600" fill="#e9eefb">博客与阅读</text>
+  <text x="1168" y="486" text-anchor="end" font-size="12.5" fill="#93a5c2" font-family="'JetBrains Mono', 'SFMono-Regular', Consolas, 'Microsoft YaHei Mono', monospace">2</text>
+  <text x="816" y="512" font-size="12.5" fill="#34a853">38 条 · 同目录重复已合并 · 失效链接已清理</text>
+  <text x="72" y="592" font-size="17" fill="#93a5c2">Chrome / Edge 书签栏 · 体检 GO/NO-GO · 自动备份 · 原子写回 · 一键还原</text>
+  <text x="1208" y="592" text-anchor="end" font-size="17" font-weight="700" fill="#4285f4">github.com/LPK3215/chrome-bookmarks-organize</text>
+</svg>

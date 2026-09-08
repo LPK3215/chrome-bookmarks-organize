@@ -506,6 +506,82 @@ class TestProfileOccupancy(unittest.TestCase):
         self.assertIn("Profile 目录", buf.getvalue())
 
 
+class TestEdgeInputRobustness(unittest.TestCase):
+    """专门钉「脏输入不会把脚本搞崩」这一类边界——书签 JSON 是浏览器产物，
+    字段值完全可能被用户/网页折腾得不成样子，脚本要优雅降级而非报未预期错误。"""
+
+    def test_huge_chrome_timestamp_returns_question(self):
+        # 10^30 微秒远超 datetime 能表示的范围，曾直接 OverflowError 崩掉整个 show/preview
+        self.assertEqual(bm.chrome_ts_to_date("9" * 30), "?")
+        self.assertEqual(bm.chrome_ts_to_date("1" + "0" * 25), "?")
+
+    def test_preview_escapes_quotes_and_tags_in_name_url(self):
+        data = bookmarks([node('say "hi" <b>bold</b>', "https://x.test/a'b&c",
+                               2024, 1, 1, "1")])
+        with tempfile.TemporaryDirectory() as t:
+            p = write(os.path.join(t, "B"), data)
+            out = os.path.join(t, "p.html")
+            with redirect_stdout(io.StringIO()):
+                bm.main(["preview", "--file", p, "--out", out])
+            content = open(out, encoding="utf-8").read()
+        self.assertIn("&quot;hi&quot;", content)          # " 必须被转义
+        self.assertNotIn("<b>bold</b>", content)          # 标签不得原样进 HTML
+        self.assertIn("&#x27;", content)                  # ' 必须被转义（否则 href 属性被截断）
+        self.assertIn("&amp;c", content)                  # & 必须被转义
+        self.assertNotIn("href='https://x.test/a'b", content)  # 不能出现"裸单引号截断 href"
+
+    def test_garbage_binary_file_clean_error_not_crash(self):
+        with tempfile.TemporaryDirectory() as t:
+            p = os.path.join(t, "garbage")
+            with open(p, "wb") as f:
+                f.write(b"\xff\xfe\x00\x01not json at all")
+            msg = run(["show", "--file", p])
+        self.assertIsNotNone(msg)
+        self.assertNotIn("Traceback", str(msg))
+        self.assertNotIn("未预期错误", str(msg))
+        self.assertIn("解析失败", str(msg))
+
+    def test_preflight_garbage_file_gives_nogo(self):
+        with tempfile.TemporaryDirectory() as t:
+            p = os.path.join(t, "garbage")
+            with open(p, "wb") as f:
+                f.write(b"\xff\xfe\x00\x01not json at all")
+            code = None
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                try:
+                    bm.main(["preflight", "--file", p])
+                except SystemExit as e:
+                    code = e.code
+        self.assertEqual(code, 2)
+        self.assertIn("NO-GO", buf.getvalue())
+
+    def test_folder_with_unnamed_node_and_missing_children(self):
+        # Chrome 正常不会产出这种东西，但脏 JSON 里可能缺 children/缺 name——
+        # 结构检查应能发现，而不是在遍历时就崩掉
+        data = {"roots": {"bookmark_bar": {"type": "folder", "id": "1", "children": [
+            {"type": "folder", "id": "2"},           # 缺 children
+            {"type": "url", "id": "3", "url": "https://x.test/"},
+        ]}}}
+        with tempfile.TemporaryDirectory() as t:
+            p = write(os.path.join(t, "B"), data)
+            buf = io.StringIO()
+            with redirect_stdout(buf):
+                bm.main(["verify", "--file", p])
+            out = buf.getvalue()
+        self.assertIn("结构问题", out)                 # 正常跑完并报告，而不是 Traceback
+        self.assertNotIn("未预期错误", out)
+
+    def test_show_zero_length_bookmarks(self):
+        # 三个根都为空：show/diff/plan 都不该崩
+        with tempfile.TemporaryDirectory() as t:
+            p = write(os.path.join(t, "B"), bookmarks([]))
+            for argv in (["show", "--file", p],
+                         ["plan", "--file", p, "--out", os.path.join(t, "c"), "--sort", "--dedup"]):
+                msg = run(argv)
+                self.assertIsNone(msg, argv)
+
+
 class TestMinimumArgumentPaths(unittest.TestCase):
     """每个命令的「最省参数」都必须能跑到底。
 

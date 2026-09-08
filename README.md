@@ -3,6 +3,23 @@
 > **AI 整理浏览器书签栏 / 收藏夹**（Chrome、Edge）：书签太乱？让 AI 按内容自动归类、重排目录、改名、去重、排序、清理失效链接——直接编辑 Chrome/Edge 的 Bookmarks JSON 文件，**完全绕开"导出 HTML → 导入"的重复追加问题**。
 > 一句话定位：**一段提示词打底，一份脚本保底——默认用脚本跑。**
 
+[![CI：三平台回归测试](https://github.com/LPK3215/chrome-bookmarks-organize/actions/workflows/test.yml/badge.svg)](https://github.com/LPK3215/chrome-bookmarks-organize/actions/workflows/test.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+**整理效果一眼看（`scripts/test/sample/` 通用站点演示数据）：**
+
+```
+整理前（40 条随手乱放）              整理后（38 条归入 7 个类目目录）
+书签栏 ├ 10 条平铺                    书签栏 ├ 📁 购物       淘宝网 / 京东 / 拼多多 / 天猫 …
+      ├ 📁 新建文件夹                  ├ 📁 新闻资讯   新浪 / 网易 / 澎湃 / 新华社 …
+      ├ 📁 新建文件夹 (1)   ← 40 条   ├ 📁 技术开发   GitHub / Stack Overflow / MDN …
+      ├ 📁 新建文件夹 (2)   全散落      ├ 📁 学习资源   MOOC / Coursera / 知乎 …
+      └ … 无分类、重复收藏              ├ 📁 视频娱乐   bilibili / YouTube / 爱奇艺 …
+                                       ├ 📁 生活工具   12306 / 高德 / 大众点评 …
+                                       └ 📁 博客与阅读 少数派 / 即刻 …
+                                          （同目录重复并入 1 条、失效链接删除）
+```
+
 正式整理书签，**默认 clone 本仓库走 `scripts/bm.py`（技能 + 脚本）**：体检 GO/NO-GO、自动备份、HTML 预览、原子写回、一键还原全部锁在代码里。不想 clone 时有两条轻路径——把 [`PROMPT.md`](PROMPT.md) 复制给任意 AI（一段话、无闸门，只适合一次性/先体验/分享），或只加载 [`SKILL.md`](SKILL.md) 走「仅提示词」（流程不变，闸门由 AI 人肉守）。**判定铁律：有脚本必用脚本，禁止手改 JSON。**
 
 正式形态遵循 [Agent Skills](https://agentskills.io) 开放标准（`SKILL.md`），并附带一个离线、零第三方依赖的命令行工具箱 `scripts/bm.py`，可直接用于 Claude Code、QwenWork、OpenCode 等支持该标准的 AI 编程工具。
@@ -101,12 +118,13 @@ python scripts/bm.py restore   --backup "<底牌>" --target "<Bookmarks>"
 ## 回归测试（改动脚本后必跑）
 
 ```bash
-python scripts/test/run_tests.py     # 48 项，零第三方依赖，约 1 秒
+python scripts/test/run_tests.py     # 54 项，零第三方依赖，约 1 秒
 ```
 
 它锁的是**安全不变量**，不是覆盖率：去重是否保留最新、跨目录是否被误删、`plan` 有没有写过源文件、
-两个安全闸（含 Profile 占用锁）是否还拦得住、写回是否原子、结构闸门是否还生效、移动/改名/副本减少的分类对不对，
-以及**每个命令最省参数的组合还能不能跑到底**。
+两个安全闸（含 Profile 占用锁）是否还拦得住、写回是否原子、结构闸门是否还生效、移动/改名/副本减少的分类对不对、
+**每个命令最省参数的组合还能不能跑到底**，以及**脏输入边界**——超大门户时间戳、非 UTF-8 垃圾文件、
+含引号/尖括号的名称与 URL、残缺节点结构都不会让脚本崩成"未预期错误"。
 
 最后这条不是凑数的：`preview` 不带 `--base` 时曾因变量缺初值直接崩溃，藏了两个版本没人发现——
 因为手工验证时总带着 `--base`。现在 `TestMinimumArgumentPaths` 会把每种最小参数组合都跑一遍。
@@ -120,7 +138,7 @@ python scripts/test/run_tests.py     # 48 项，零第三方依赖，约 1 秒
 - `SKILL.md` — 给 AI 看的操作规范（默认脚本 + 无脚本降级 + 流程 + Pitfalls + 验证）。可单独加载当提示词，不必下载整仓。
 - `scripts/bm.py` — 上述工具箱（单文件、零第三方依赖，10 个子命令）。
 - `scripts/test/sample/` — **入库**的通用站点演示样例：真实公开网站合成的 before（乱 40 条）/ after（归好 38 条）一对 + 生成脚本，零隐私、`clone` 后立刻有靶子可练。
-- `scripts/test/run_tests.py` — 零依赖回归测试（48 项），改完 `bm.py` 请跑它。
+- `scripts/test/run_tests.py` — 零依赖回归测试（54 项），改完 `bm.py` 请跑它。
 - `scripts/test/` — **不入库**的真实书签快照（裁剪过的 `Bookmarks.before`/`after`，含隐私，已被 `.gitignore` 屏蔽），本地验证脚本手感用。
 - `MAINTENANCE.md` — 长期维护文档：**AI 判断 vs 脚本执行**的分工合同、脚本质量台账、边界矩阵、变更日志。
 

@@ -31,9 +31,9 @@
 | detect | 按 OS 环境变量自动定位 Bookmarks | 本机重探到 Chrome Default/Profile 1、Edge Default；mtime 排序、"疑似在用"标记、`Local State` 显示名「LPK」均对；`--browser edge` 过滤有效 | 2026-09-08 | 已扩 Chromium/Brave/Vivaldi/Opera 根（**mac/linux 未在本机验**）；"整块 AppData 挪别的盘"仍需 `--root` |
 | preflight | 只读体检 → GO/NO-GO | Chrome 开着判 NO-GO、rc=2；chmod 444 判"不可写"NO-GO；缺文件/损坏 JSON 报 NO-GO；**新增：Profile 占用锁（`SingletonLock` 等）存在即 NO-GO**，**提示 Profile 是否开着云端同步**（没迹象时如实说"未发现"，不谎称没开），并建议动手前先整个 Profile 目录复制一份 | 2026-09-08 | 进程探测不可用时只告警不阻断（交由 finalize 的占用锁兜第二道） |
 | backup | 底牌+manifest | 微秒时间戳防同秒碰撞 + 复制后 sha256 校验（不一致即丢弃并报错）；**`restore_cmd` 已改绝对路径**（解释器+脚本+底牌+目标），任何目录下可直接粘贴运行；源 JSON 损坏时仍会留下底牌与记录，不会被异常吞掉 | 2026-09-08 | 真实文件仅做只读快照，未跑写操作（符合预期） |
-| show | 读结构+体检 | 新增 `--depth N`（只打到第 N 层）/ `--stats`（只看体检）；>300 条自动提醒改用这两个开关；重复 URL **逐条标注「同目录→会被去重」还是「跨目录→保留」**，消除"AI 拿着全树重复表向用户承诺去重"的误判；重复 id 改用 Counter 一次扫出（原 O(n²) 写法已删）；缺 `roots` 给干净中文而非 KeyError | 2026-09-08 | 排序为 Unicode 码点序，非中文拼音序（需 locale/第三方库，暂搁） |
+| show | 读结构+体检 | 新增 `--depth N`（只打到第 N 层）/ `--stats`（只看体检）；>300 条自动提醒改用这两个开关；重复 URL **逐条标注「同目录→会被去重」还是「跨目录→保留」**，消除"AI 拿着全树重复表向用户承诺去重"的误判；重复 id 改用 Counter 一次扫出（原 O(n²) 写法已删）；缺 `roots` 给干净中文而非 KeyError；**异常/超大 `date_added` 一律显示 `?`/`-`，展示层不崩（有单测）** | 2026-09-08 | 排序为 Unicode 码点序，非中文拼音序（需 locale/第三方库，暂搁） |
 | plan | 内存重排到候选 | sort+dedup 跑通，原文件 0 改动已证明；真实快照 3276→3275（并掉 1 条同目录重复） | 2026-09-08 | 仅 `--sort/--dedup`；改名/移动/新建目录尚未脚本化（暂靠 AI 改 JSON） |
-| preview | 本地HTML嵌套树预览 | 真·嵌套 `<ul>` 树；**目录可折叠（原生 `<details>`，无 JS）**；`--base` 差异区与 `diff` 共用同一套分类（删/增/移动/改名/副本减少，按颜色区分）；**默认输出改到当前目录**（原来写到书签文件旁＝浏览器 Profile 目录），落在 Profile 里会告警 | 2026-09-08 | 折叠默认全展开；**修复：不带 `--base` 时 `diff_html` 缺初值导致 UnboundLocalError（v1.5.0 起存在，被最小参数测试抓出）** |
+| preview | 本地HTML嵌套树预览 | 真·嵌套 `<ul>` 树；**目录可折叠（原生 `<details>`，无 JS）**；`--base` 差异区与 `diff` 共用同一套分类（删/增/移动/改名/副本减少，按颜色区分）；**默认输出改到当前目录**（原来写到书签文件旁＝浏览器 Profile 目录），落在 Profile 里会告警；**修复：HTML 转义改用 `html.escape(quote=True)`——此前不转引号，URL/名称含 `'`/`"` 会把 `href='…'` 截断甚至注入伪属性（有单测）** | 2026-09-08 | 折叠默认全展开；**修复：不带 `--base` 时 `diff_html` 缺初值导致 UnboundLocalError（v1.5.0 起存在，被最小参数测试抓出）** |
 | diff | 两份书签增删对账 | **重写为「路径+名称+链接」的多重集比对**：能区分真删除/真新增/**移动**/改名/**副本减少**，并把 `(名称,链接)` 仍在对方的条目判为"副本减少"而非"删除"；新增路徑有助于发现"纯整理目录"这种过去会报"删0/增0"的场景 | 2026-09-08 | 改名+移动同时发生时，按"先配改名再配移动"的顺序处理，极端多重重名场景可能配对次序不理想（暂未发现误判） |
 | finalize | 唯一动真身 | Chrome 开着拒绝（rc=1）；`--force` 放行 + 自动 prescript 兜底 + 改名陈旧 .bak；**新增：写回前先验候选结构（缺 roots/三根之一即拒），并先验目标（目标存在却解析不出 roots 即拒，防 `--target` 指错盖到别的文件，需 `--force` 放行）**；**安全闸加第二道防线——Profile 占用锁**（`SingletonLock`/`Cookie`/`Socket` 存在即拒，即使进程表里没有浏览器）**写回改为先落 `.tmp` 再 `os.replace` 的原子替换**，中途失败不再留下半个 JSON；安全闸与本表 restore 共用同一实现；**新增：`--from` 与 `--target` 同一文件即拒绝**（自我覆盖会在唯一副本上改写并删 checksum）；**数量护栏：候选 0 条直接拒绝、候选条数 < 真身 50% 大声告警**（防 AI 改 JSON 把书签弄丢一半） | 2026-09-08 | 真实浏览器 Profile 仍未 finalize（测试期只打临时目录副本） |
 | verify | 校验+对账 | 合成+真实文件跑通；BOM 文件也能读；损坏 JSON 自身捕获报错；**`--before` 现在额外输出"变更分类"（删/增/移动/改名/副本减少）**，与 `diff` 同口径；`--before` 读不出时给告警而非崩 | 2026-09-08 | `--before` 依赖用户传对底牌路径；发现问题只报告不自动回滚 |
@@ -73,7 +73,7 @@
 | **预览/候选中产物写进浏览器 Profile 目录** | `preview` 默认落到当前工作目录；`plan`/`preview` 检测到输出落在含 `Preferences` 的目录就告警 | ✅ |
 | **命令省参数调用却因未初始化变量崩溃** | `TestMinimumArgumentPaths` 把每个命令的最省参数组合都跑一遍 | ✅（已抓出 preview 的实际 bug） |
 | **目标 Profile 开着云端同步，误删会传播** | 脚本管不了浏览器的合并行为 → `preflight` 明确提示（并区分"未发现迹象"而非谎称没开）+ SKILL Pitfalls 写明"云端是复制品不是备份" + 阶梯 L2/L3 要求先做**整个 Profile 目录副本** | 提示已实现；行为保证只能靠阶梯验证 |
-| **护栏被后来的改动悄悄破坏** | `scripts/test/run_tests.py` 48 项回归 + CI 三平台；已做变异验证（把去重比较符改反→测试立刻变红）；最小参数组合也纳入回归 | ✅ |
+| **护栏被后来的改动悄悄破坏** | `scripts/test/run_tests.py` 54 项回归 + CI 三平台；已做变异验证（把去重比较符改反→测试立刻变红）；最小参数组合也纳入回归 | ✅ |
 | **写回写到一半失败（磁盘满/被占用）** | 先写 `.tmp` 再 `os.replace` 原子替换，真身永不为半截 JSON | ✅（代码就位） |
 | **候选文件本身是垃圾/结构非法** | `finalize` 先验证 `roots` 与三个根之一，不合法直接拒绝写回 | ✅ |
 | **还原时浏览器在跑** | `restore` 与 `finalize` 共用 `_safety_gate`，同样拒绝并提供 `--force` | ✅（Chrome 开着→拒） |
@@ -81,6 +81,10 @@
 | 跨平台行尾打架 | 新增 `.gitattributes`（`* text=auto eol=lf`） | ✅ |
 | 装了进程名清单之外的 Chromium 内核浏览器 | 进程名表固定，`--force` 之外会**漏检**（危险方向是漏检不是误报） | 已知风险，建议由人确认 |
 | **底牌本身坏了，restore 却照盖** | 覆盖真身前先校验底牌（能解析 + 有 roots），坏则拒绝、真身不动 | ✅（有单测） |
+| **书签里塞了个天文数字 `date_added`** | `chrome_ts_to_date` 对 `OverflowError`/越界一律返回 `?`，`show`/`preview` 展示层不崩 | ✅（有单测） |
+| **文件根本不是 UTF-8 文本（二进制/乱码）** | `load` 抛 `UnicodeDecodeError`；`main` 与 `JSONDecodeError` 合并捕获，给同一句干净中文；`preflight` 判 NO-GO | ✅（有单测） |
+| **URL/名称含引号、尖括号、`&`** | `preview` 的 `esc` 用 `html.escape(quote=True)`，属性与文本统一转义，`href='…'` 不会被截断/注入 | ✅（有单测） |
+| **folder 缺 `children`/缺 `name`、三根全空** | `verify` 只报"结构问题"不崩；`show`/`plan` 空树照常跑 | ✅（有单测） |
 | **`finalize` 把候选和真身指成同一个文件** | 路径相同即拒绝自我覆盖（防在唯一副本上改写并删 checksum） | ✅（有单测） |
 | **AI 改 JSON 时不小心把书签丢了一大半** | `finalize` 数量护栏：候选 0 条拒绝、候选条数 < 真身 50% 告警（演示时挡住"我的书签怎么没了"） | ✅（有单测） |
 
@@ -90,7 +94,7 @@
 
 | 位置 | 性质 | 是否入库 | 用途 |
 |---|---|---|---|
-| `test/run_tests.py` | 零依赖回归测试（unittest，48 项，~1 秒） | ✅ 入库 | 锁安全不变量；改完 `bm.py` 必跑 |
+| `test/run_tests.py` | 零依赖回归测试（unittest，54 项，~1 秒） | ✅ 入库 | 锁安全不变量；改完 `bm.py` 必跑 |
 | `test/sample/` | **通用站点**演示样例（before 乱 40 条 / after 归好 38 条）+ `make_sample.py` | ✅ 入库 | clone 后立刻有靶子；兼作回归验收基准 |
 | `test/Bookmarks.*` | 真实书签裁剪快照（~99 条） | ❌ 被 `.gitignore` 屏蔽 | 本地验证真实结构手感 |
 
@@ -156,6 +160,12 @@ python scripts/bm.py verify    --file "<Bookmarks>" --before "<底牌>"
 
 ## 8. 变更日志
 
+- 2026-09-08 v1.13.0：**边界加固一轮——修掉 3 处"脏输入会把脚本搞崩"的洞，回归 48 → 54 项**。
+  - 🔴 **修 bug：超大 `date_added` 使展示崩栈**。`chrome_ts_to_date` 只做了 `int()` 转换，10^30 微秒这类异常值在构造 `datetime + timedelta` 时抛 `OverflowError`，`show`/`preview` 会跟着报"未预期错误"（而它只是**显示**用的函数）。现在溢出返回 `?`，展示层永不因时间戳崩。
+  - 🔴 **修 bug：`preview` 生成的 HTML 不转义引号**。URL/名称里出现 `'` 或 `"` 时，`href='…'` 结构会被截断，甚至能把伪属性"注入"进本地 HTML。`esc` 改为标准 `html.escape(quote=True)`，属性与文本统一转义。
+  - 🔴 **修 bug：非 UTF-8 垃圾文件报"未预期错误"而非干净中文**。`main` 只捕获 `json.JSONDecodeError`，但坏文件常在解码阶段抛 `UnicodeDecodeError`，落入兜底异常。现两种解析失败给同一句中文（可能已损坏/非 UTF-8/正被浏览器写入）。
+  - 新增 `TestEdgeInputRobustness` 6 项：超大门户时间戳、HTML 引号/标签/`&` 转义断言、垃圾二进制文件在 `show`/`preflight` 下干净失败（无 Traceback、无"未预期错误"）、残缺 folder（缺 `children`/`name`）`verify` 只报结构问题不崩、三根全空文件 `show`/`plan` 不崩。
+  - 文档对齐：SKILL frontmatter 1.12.1 → 1.13.0；README 增加 GitHub CI/License 徽章与"整理前后一眼看"ASCII 对照图；README/SKILL/MAINTENANCE 的回归数字统一 48 → 54；顺手把 `stdout.reconfigure` 写成类型检查友好的 `getattr` 版本（清掉 pyright 1 个 error）。
 - 2026-09-08 v1.12.1：**描述层补检索关键词——一句话说清"AI 整理浏览器书签栏"本质**。`SKILL.md` frontmatter `description` 与 `README.md` 首屏 tagline 重写：把人们实际会搜的口语说法（"整理书签栏 / 整理收藏夹 / 书签太乱帮我归类 / 清理重复书签 / 浏览器书签整理"）放前面，技术原理（改 Bookmarks JSON、绕开导出导入）放后面解释"凭什么能做到"。纯描述层改动，`PROMPT.md` 首句定义本就含关键词，行为零变化、版本 1.12.0 → 1.12.1。
 - 2026-09-08 v1.12.0：**入库样例从"虚构 18 条"升级为"通用站点演示数据（before 乱 40 / after 归好 38）"**，仓库结构做最后整理。
   - 重写 `test/sample/make_sample.py`：改用**真实存在的通用网站**（淘宝/京东/拼多多/天猫/苏宁易购/亚马逊中国、新浪/网易/澎湃/新华社/BBC 中文/纽约时报中文网、GitHub/Stack Overflow/MDN/掘金/阮一峰/LeetCode、中国大学MOOC/Coursera/学堂在线/知乎/维基百科/可汗学院、bilibili/YouTube/爱奇艺/腾讯视频/芒果TV/网易云音乐、铁路12306/高德地图/大众点评/中国天气网/百度翻译/顺丰速运、少数派/即刻 = 38 条），`after` 归入 7 个类目目录，一眼看懂整理效果；不再用 `example.test` 占位域名。

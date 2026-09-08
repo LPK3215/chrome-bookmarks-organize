@@ -19,6 +19,7 @@
 import argparse
 import glob
 import hashlib
+import html
 import json
 import os
 import platform
@@ -31,8 +32,9 @@ _SCRIPT = os.path.abspath(__file__)  # 用于生成「拿到就能直接粘贴�
 
 # Windows 控制台默认 GBK，中文/符号易崩，stdout 与 stderr 都切 UTF-8
 for _stream in (sys.stdout, sys.stderr):
-    if hasattr(_stream, "reconfigure"):
-        _stream.reconfigure(encoding="utf-8")
+    _reconfigure = getattr(_stream, "reconfigure", None)
+    if callable(_reconfigure):
+        _reconfigure(encoding="utf-8")
 
 CHROME_EPOCH = datetime(1601, 1, 1)
 SHOW_TREE_WARN = 300  # 超过这个条数，show 打印前提醒一句"全树很长"，建议 --depth/--stats
@@ -59,7 +61,11 @@ def chrome_ts_to_date(raw):
         return "?"
     if us <= 0:
         return "-"
-    return (CHROME_EPOCH + timedelta(microseconds=us)).strftime("%Y-%m-%d")
+    try:
+        return (CHROME_EPOCH + timedelta(microseconds=us)).strftime("%Y-%m-%d")
+    except (OverflowError, ValueError, OSError):
+        # 异常巨大的 date_added（如 10^30 微秒）超出 datetime 范围，别让展示崩栈
+        return "?"
 
 
 def walk(node):
@@ -548,7 +554,9 @@ def cmd_preview(args):
         print(f"[preview] ⚠ 输出落在浏览器 Profile 目录里（{out}），建议用 --out 指到别处")
 
     def esc(s):
-        return (s or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        # 属性值（href='…'）与文本节点都吃这同一份转义：必须连引号一起转，
+        # 否则 URL/名称里出现 ' 或 " 会把 HTML 结构截断（甚至注入出伪属性）。
+        return html.escape(s or "", quote=True)
 
     def rc(n):
         return 1 if n.get("type") == "url" else sum(rc(c) for c in n.get("children", []))
@@ -597,7 +605,7 @@ def cmd_preview(args):
         diff_html = (f"<div class='diff'><h3>与原版差异（{diff_summary}）</h3>"
                      f"<ul>{items or '<li>无差异</li>'}</ul></div>")
 
-    html = f"""<!doctype html><html><head><meta charset="utf-8"><title>书签结构预览</title>
+    page_html = f"""<!doctype html><html><head><meta charset="utf-8"><title>书签结构预览</title>
 <style>
 body{{font-family:system-ui,"Segoe UI","Microsoft YaHei",sans-serif;padding:22px 28px;color:#222;line-height:1.5}}
 h2{{margin:0 0 6px}}
@@ -627,7 +635,7 @@ a.u:hover{{text-decoration:underline}}
 {diff_html}
 </body></html>"""
     with open(out, "w", encoding="utf-8") as f:
-        f.write(html)
+        f.write(page_html)
     print(f"[preview] 已生成本地嵌套树预览 {out}")
     if args.base:
         print(f"[preview] 与原版差异：{diff_summary}")
@@ -988,8 +996,10 @@ def main(argv=None):
         args.func(args)
     except FileNotFoundError as e:
         sys.exit(f"✗ {e}")
-    except json.JSONDecodeError as e:
-        sys.exit(f"✗ JSON 解析失败（文件可能已损坏或正被浏览器写入）：{e}")
+    except (json.JSONDecodeError, UnicodeDecodeError) as e:
+        # json.JSONDecodeError=JSON 语法坏；UnicodeDecodeError=文件根本不是 UTF-8 文本。
+        # 两种都不该落到"未预期错误"，给同一句干净中文即可。
+        sys.exit(f"✗ 文件解析失败（可能已损坏、非 UTF-8 编码，或正被浏览器写入）：{e}")
     except SystemExit:
         raise
     except Exception as e:

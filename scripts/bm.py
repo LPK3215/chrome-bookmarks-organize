@@ -640,6 +640,11 @@ def cmd_finalize(args):
     """把候选 --from 安装到 --target：删 checksum + 处理陈旧 .bak，然后原子写回。"""
     _safety_gate(args.force, "finalize", target=args.target)  # 安全闸①：浏览器在跑 / Profile 被占用就拒绝
 
+    # 自我覆盖：--from 与 --target 指向同一文件。既无意义，又会删掉它的 checksum、改坏唯一副本。
+    if os.path.abspath(args.file_from) == os.path.abspath(args.target) and not args.force:
+        sys.exit("[finalize] ✗ --from 与 --target 是同一文件：自我覆盖既无意义，又会删掉它的 checksum、"
+                 "改坏这份唯一副本。请把 --from 指向候选、--target 指向真身。")
+
     data = load(args.file_from)
     if not isinstance(data, dict) or not isinstance(data.get("roots"), dict) \
             or not any(k in data["roots"] for k in ("bookmark_bar", "other", "synced")):
@@ -743,11 +748,19 @@ def cmd_restore(args):
     开了浏览器同步时，底牌拍摄之后由其他设备同步来的书签会被一并退回（已在 SKILL Pitfalls 写明）。"""
     if not os.path.isfile(args.backup):
         sys.exit(f"[restore] 底牌不存在: {args.backup}")
+    # 先校验底牌本身可用——否则下面 copy2 会直接把真身盖成坏文件，连最后一份好副本都没了
+    try:
+        bk = load(args.backup)
+    except Exception as e:
+        sys.exit(f"[restore] ✗ 底牌无法解析（拒绝还原）：{e}\n"
+                 f"        底牌坏了还硬盖，会把真身也变成坏文件。请换一份完好的底牌。")
+    if not isinstance(bk, dict) or not isinstance(bk.get("roots"), dict):
+        sys.exit(f"[restore] ✗ 底牌结构非法（缺 roots），拒绝还原，真身保持不变。")
     _safety_gate(args.force, "restore", target=args.target)
     _prescript_snapshot(args.target, "restore", "prerestore")  # 还原前也兜一份当前状态
 
     shutil.copy2(args.backup, args.target)
-    data = load(args.target)  # 解析校验，坏文件立刻暴露
+    data = load(args.target)  # 盖完后复验，坏文件立刻暴露
     took = datetime.fromtimestamp(os.path.getmtime(args.backup)).strftime("%Y-%m-%d %H:%M:%S")
     print(f"[restore] 已回退 {args.target} 到底牌拍摄时刻 {took}"
           f"（url {count_urls(data)} 条），文件可正常解析")

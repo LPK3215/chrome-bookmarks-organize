@@ -548,6 +548,57 @@ class TestMinimumArgumentPaths(unittest.TestCase):
         self.assertTrue(os.path.isfile(os.path.join(self.dir.name, "_backup_manifest.txt")))
 
 
+class TestRestoreCorruptBackup(unittest.TestCase):
+    """restore 必须先在覆盖前校验底牌——否则底牌损坏会把真身也写坏，最后一份好副本都没了。"""
+
+    def setUp(self):
+        self.dir = tempfile.TemporaryDirectory()
+        self.target = write(os.path.join(self.dir.name, "Bookmarks"),
+                            bookmarks([node("A", "https://a.test/", 2024, 1, 1, "1")]))
+        self.backup = self.target + ".backup-20260101-000000-000000"
+
+    def tearDown(self):
+        self.dir.cleanup()
+
+    def test_refuses_corrupt_backup_and_keeps_target(self):
+        write(self.backup, "{ 这不是合法的 json ")   # 损坏底牌
+        with NoBrowser([]):
+            msg = run(["restore", "--backup", self.backup, "--target", self.target])
+        self.assertIn("拒绝还原", msg)                      # 解析失败或结构非法都要拒
+        self.assertEqual(bm.count_urls(bm.load(self.target)), 1)   # 真身完好
+
+    def test_refuses_non_bookmark_backup(self):
+        write(self.backup, {"hello": "world"})    # JSON 合法但不是书签
+        with NoBrowser([]):
+            msg = run(["restore", "--backup", self.backup, "--target", self.target])
+        self.assertIn("结构非法", msg)
+        self.assertEqual(bm.count_urls(bm.load(self.target)), 1)
+
+
+class TestFinalizeSelfTarget(unittest.TestCase):
+    """--from 与 --target 指同一文件 = 在唯一副本上自我改写，必须拒绝。"""
+
+    def setUp(self):
+        self.dir = tempfile.TemporaryDirectory()
+        self.f = write(os.path.join(self.dir.name, "Bookmarks"),
+                       bookmarks([node("A", "https://a.test/", 2024, 1, 1, "1")]))
+
+    def tearDown(self):
+        self.dir.cleanup()
+
+    def test_refuses_self_target(self):
+        with NoBrowser([]):
+            msg = run(["finalize", "--from", self.f, "--target", self.f])
+        self.assertIn("同一文件", msg)
+        self.assertEqual(bm.count_urls(bm.load(self.f)), 1)
+        self.assertFalse(any(".prescript-" in x for x in os.listdir(self.dir.name)))
+
+    def test_force_allows_self_target(self):
+        with NoBrowser([]):
+            run(["finalize", "--from", self.f, "--target", self.f, "--force"])
+        self.assertNotIn("checksum", bm.load(self.f))   # --force 放行后确实写回成功
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
 
